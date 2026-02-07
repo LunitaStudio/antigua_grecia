@@ -38,15 +38,38 @@ class ClientNPC {
     }
 
     interact(player) {
-        if (this.hasDelivered) return;
+        const { AMPHORA_SELL_PRICE } = GAME_CONSTANTS;
 
-        this.hasDelivered = true;
+        // Verificar si el jugador tiene ánforas
+        if (player.amphoras === 0) {
+            return {
+                success: false,
+                message: '"¿Y las ánforas?\nVolvé cuando traigas mercadería."'
+            };
+        }
 
-        // Ocultar indicador
+        // Vender ánforas
+        const saleResult = player.sellAmphoras(AMPHORA_SELL_PRICE);
+
+        // Regenerar paciencia
+        player.restorePatience(GAME_CONSTANTS.PATIENCE_REGEN_ON_SELL);
+
+        // Ocultar indicador temporalmente
         this.exclamation.setVisible(false);
 
-        // Trigger win condition
-        this.scene.events.emit('delivery-complete');
+        // Volver a mostrar indicador después de 2 segundos
+        this.scene.time.delayedCall(2000, () => {
+            if (this.exclamation) {
+                this.exclamation.setVisible(true);
+            }
+        });
+
+        return {
+            success: true,
+            message: `"¡Excelente trabajo!\nTe pago ${saleResult.earned} dracmas por ${saleResult.count} ánfora${saleResult.count > 1 ? 's' : ''}.\n¡Volvé pronto!"`,
+            sold: saleResult.count,
+            earned: saleResult.earned
+        };
     }
 
     getPosition() {

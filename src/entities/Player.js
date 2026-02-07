@@ -20,9 +20,14 @@ class Player {
         this.sprite.play('boy_idle_down');
         this.currentDirection = 'down';
 
-        // Stats
-        this.patience = GAME_CONSTANTS.PLAYER_PATIENCE_MAX;
-        this.hasAmphora = true;
+        // Sistema de Inventario y Economía
+        this.money = GAME_CONSTANTS.MONEY_INITIAL;
+        this.amphoras = 0;
+        this.maxAmphoras = GAME_CONSTANTS.MAX_AMPHORAS;
+
+        // Paciencia (Global - se mantiene entre encuentros)
+        this.patience = GAME_CONSTANTS.PATIENCE_INITIAL;
+        this.maxPatience = GAME_CONSTANTS.PATIENCE_MAX;
 
         // Input
         this.cursors = scene.input.keyboard.createCursorKeys();
@@ -91,11 +96,46 @@ class Player {
         return this.patience > 0;
     }
 
+    restorePatience(amount) {
+        this.patience = Math.min(this.maxPatience, this.patience + amount);
+    }
+
+    hasAmphora() {
+        return this.amphoras > 0;
+    }
+
     useAmphora() {
-        if (this.hasAmphora) {
-            this.hasAmphora = false;
+        if (this.amphoras > 0) {
+            this.amphoras--;
             return true;
         }
         return false;
+    }
+
+    buyAmphoras(quantity, price) {
+        const totalCost = quantity * price;
+        if (this.money >= totalCost) {
+            this.money -= totalCost;
+            this.amphoras = Math.min(this.maxAmphoras, this.amphoras + quantity);
+            return true;
+        }
+        return false;
+    }
+
+    sellAmphoras(pricePerUnit) {
+        if (this.amphoras > 0) {
+            const totalEarned = this.amphoras * pricePerUnit;
+            this.money += totalEarned;
+            const soldCount = this.amphoras;
+            this.amphoras = 0;
+            return { success: true, count: soldCount, earned: totalEarned };
+        }
+        return { success: false, count: 0, earned: 0 };
+    }
+
+    loseAllAmphoras() {
+        const lost = this.amphoras;
+        this.amphoras = 0;
+        return lost;
     }
 }

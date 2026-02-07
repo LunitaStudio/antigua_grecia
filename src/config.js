@@ -26,13 +26,14 @@ const GAME_CONSTANTS = {
     SOCRATES_SPEED: 100,
     SOCRATES_DETECT_RADIUS: 200,
     SOCRATES_ENGAGE_RADIUS: 40,
+    SOCRATES_KO_DURATION: 8000, // 8 segundos stunned al recibir ánfora
     TILE_SIZE: 32,
     MAP_WIDTH: 40,
     MAP_HEIGHT: 18,
 
     // Zonas del mapa (en tiles)
     ZONES: {
-        LEFT_STREET: { start: 0, end: 7 },      // Calle izquierda (spawn)
+        LEFT_STREET: { start: 0, end: 7 },      // Calle izquierda (spawn/proveedor)
         PLAZA: { start: 8, end: 28 },           // Plaza central (Sócrates)
         RIGHT_STREET: { start: 29, end: 39 }    // Calle derecha (cliente)
     },
@@ -44,16 +45,36 @@ const GAME_CONSTANTS = {
     SOCRATES_SPAWN_Y: 9,
     CLIENT_SPAWN_X: 37,  // tile x final de calle derecha
     CLIENT_SPAWN_Y: 9,
+    PROVIDER_SPAWN_X: 2, // tile x proveedor en calle izquierda
+    PROVIDER_SPAWN_Y: 9,
 
-    // Stats de combate
-    PLAYER_PATIENCE_MAX: 100,
-    SOCRATES_PESADEZ_MAX: 100,
+    // Sistema Económico
+    MONEY_INITIAL: 60,           // Dinero inicial (suficiente para ~1 viaje)
+    AMPHORA_BUY_PRICE: 10,       // Precio de compra al proveedor
+    AMPHORA_SELL_PRICE: 18,      // Precio de venta al cliente
+    MAX_AMPHORAS: 5,             // Capacidad máxima de ánforas
+    WIN_MONEY_GOAL: 200,         // Dinero objetivo para ganar
+
+    // Sistema de Paciencia (Global)
+    PATIENCE_MAX: 100,
+    PATIENCE_INITIAL: 100,
+    PATIENCE_REGEN_ON_SELL: 20,  // Regeneración al vender exitosamente
+    PATIENCE_REGEN_ON_BUY: 10,   // Regeneración al comprar
+
+    // Stats de combate (Capa 2)
+    SOCRATES_INTENSITY_MAX: 100, // Intensidad de Sócrates en combate
+
+    // Chances de éxito en diálogo (Capa 1)
+    DIALOG_CHANCE_GOOD: 0.80,    // 80% con respuesta filosófica
+    DIALOG_CHANCE_REGULAR: 0.50, // 50% con respuesta práctica
+    DIALOG_CHANCE_BAD: 0.20,     // 20% si ignoras
 
     // Estados de Sócrates
     SOCRATES_STATES: {
         IDLE: 'IDLE',
         DETECT: 'DETECT',
         PURSUE: 'PURSUE',
-        ENGAGE: 'ENGAGE'
+        ENGAGE: 'ENGAGE',
+        STUNNED: 'STUNNED'  // Nuevo: KO por ánfora
     }
 };

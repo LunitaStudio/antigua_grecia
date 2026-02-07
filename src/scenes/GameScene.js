@@ -32,6 +32,14 @@ class GameScene extends Phaser.Scene {
             SOCRATES_SPAWN_Y * TILE_SIZE + TILE_SIZE / 2
         );
 
+        // Crear NPC proveedor en calle izquierda
+        const { PROVIDER_SPAWN_X, PROVIDER_SPAWN_Y } = GAME_CONSTANTS;
+        this.provider = new ProviderNPC(
+            this,
+            PROVIDER_SPAWN_X * TILE_SIZE + TILE_SIZE / 2,
+            PROVIDER_SPAWN_Y * TILE_SIZE + TILE_SIZE / 2
+        );
+
         // Crear NPC cliente en calle derecha
         const { CLIENT_SPAWN_X, CLIENT_SPAWN_Y } = GAME_CONSTANTS;
         this.client = new ClientNPC(
@@ -49,11 +57,20 @@ class GameScene extends Phaser.Scene {
         this.physics.add.collider(this.player.sprite, this.obstacles);
         this.physics.add.collider(this.socrates.sprite, this.obstacles);
 
-        // Colisión con NPC cliente (overlap para detectar contacto)
+        // Colisión con NPC proveedor
+        this.physics.add.overlap(
+            this.player.sprite,
+            this.provider.sprite,
+            () => this.handleProviderInteraction(),
+            null,
+            this
+        );
+
+        // Colisión con NPC cliente
         this.physics.add.overlap(
             this.player.sprite,
             this.client.sprite,
-            () => this.client.interact(this.player),
+            () => this.handleClientInteraction(),
             null,
             this
         );
@@ -67,9 +84,12 @@ class GameScene extends Phaser.Scene {
             this.handleSocratesEngagement();
         });
 
-        this.events.on('delivery-complete', () => {
-            this.handleVictory();
-        });
+        // Trackear estadísticas
+        this.stats = {
+            tripsCompleted: 0,
+            amphorasLost: 0,
+            encountersWithSocrates: 0
+        };
 
         // UI de stats
         this.createUI();
@@ -292,30 +312,59 @@ class GameScene extends Phaser.Scene {
     createUI() {
         const { width } = this.cameras.main;
 
-        // Panel de stats (fijo en cámara)
-        this.statsPanel = this.add.container(width - 150, 10);
-        this.statsPanel.setScrollFactor(0);
-        this.statsPanel.setDepth(6000);
+        // Panel de economía (superior derecha)
+        this.economyPanel = this.add.container(width - 180, 10);
+        this.economyPanel.setScrollFactor(0);
+        this.economyPanel.setDepth(6000);
 
-        const bg = this.add.rectangle(0, 0, 140, 80, 0x000000, 0.7);
-        bg.setOrigin(0);
+        const economyBg = this.add.rectangle(0, 0, 170, 110, 0x000000, 0.8);
+        economyBg.setOrigin(0);
 
-        this.patienceText = this.add.text(10, 10, '', {
+        this.moneyText = this.add.text(10, 10, '', {
+            fontSize: '16px',
+            color: '#f39c12',
+            fontStyle: 'bold'
+        });
+
+        this.moneyGoalText = this.add.text(10, 32, '', {
+            fontSize: '12px',
+            color: '#95a5a6'
+        });
+
+        this.amphorasText = this.add.text(10, 52, '', {
+            fontSize: '14px',
+            color: '#e67e22'
+        });
+
+        this.patienceText = this.add.text(10, 74, '', {
             fontSize: '14px',
             color: '#3498db'
         });
 
-        this.socratesText = this.add.text(10, 35, '', {
-            fontSize: '14px',
-            color: '#e74c3c'
-        });
+        this.patienceBar = this.add.rectangle(10, 95, 150, 8, 0x3498db);
+        this.patienceBar.setOrigin(0, 0);
+        this.patienceBarBg = this.add.rectangle(10, 95, 150, 8, 0x34495e);
+        this.patienceBarBg.setOrigin(0, 0);
 
-        this.stateText = this.add.text(10, 60, '', {
-            fontSize: '12px',
-            color: '#f39c12'
-        });
+        this.economyPanel.add([
+            economyBg,
+            this.patienceBarBg,
+            this.patienceBar,
+            this.moneyText,
+            this.moneyGoalText,
+            this.amphorasText,
+            this.patienceText
+        ]);
 
-        this.statsPanel.add([bg, this.patienceText, this.socratesText, this.stateText]);
+        // Debug info (solo si DEBUG_MODE.logStates)
+        if (DEBUG_MODE.logStates) {
+            this.debugText = this.add.text(10, 120, '', {
+                fontSize: '11px',
+                color: '#95a5a6',
+                backgroundColor: '#000000',
+                padding: { x: 3, y: 3 }
+            }).setScrollFactor(0).setDepth(6000);
+        }
     }
 
     update() {
@@ -326,9 +375,29 @@ class GameScene extends Phaser.Scene {
         this.socrates.update(this.player);
 
         // Actualizar UI
-        this.patienceText.setText(`Paciencia: ${this.player.patience}`);
-        this.socratesText.setText(`Sócrates: ${this.socrates.pesadez}`);
-        this.stateText.setText(`Estado: ${this.socrates.state}`);
+        const { WIN_MONEY_GOAL } = GAME_CONSTANTS;
+        this.moneyText.setText(`💰 $${this.player.money}`);
+        this.moneyGoalText.setText(`Objetivo: $${WIN_MONEY_GOAL}`);
+        this.amphorasText.setText(`🏺 ${this.player.amphoras}/${this.player.maxAmphoras}`);
+        this.patienceText.setText(`😊 ${this.player.patience}/${this.player.maxPatience}`);
+
+        // Actualizar barra de paciencia
+        const patiencePercent = this.player.patience / this.player.maxPatience;
+        this.patienceBar.width = 150 * patiencePercent;
+
+        // Color de la barra según nivel
+        if (patiencePercent > 0.5) {
+            this.patienceBar.setFillStyle(0x3498db); // Azul
+        } else if (patiencePercent > 0.25) {
+            this.patienceBar.setFillStyle(0xf39c12); // Amarillo
+        } else {
+            this.patienceBar.setFillStyle(0xe74c3c); // Rojo
+        }
+
+        // Debug info
+        if (DEBUG_MODE.logStates && this.debugText) {
+            this.debugText.setText(`Sócrates: ${this.socrates.state}`);
+        }
 
         // Actualizar FPS (solo en debug)
         if (DEBUG_MODE.showFPS && this.fpsText) {
@@ -388,6 +457,46 @@ class GameScene extends Phaser.Scene {
                 this.time.delayedCall(1000, () => this.startCombat());
             }
         }
+    }
+
+    handleProviderInteraction() {
+        if (this.isInteracting) return;
+        this.isInteracting = true;
+
+        const result = this.provider.interact(this.player);
+
+        if (result.success) {
+            this.showFeedback(result.message, 0x27ae60);
+        } else {
+            this.showFeedback(result.message, 0xe67e22);
+        }
+
+        this.time.delayedCall(2500, () => {
+            this.isInteracting = false;
+        });
+    }
+
+    handleClientInteraction() {
+        if (this.isInteracting) return;
+        this.isInteracting = true;
+
+        const result = this.client.interact(this.player);
+
+        if (result.success) {
+            this.stats.tripsCompleted++;
+            this.showFeedback(result.message, 0x27ae60);
+
+            // Verificar win condition
+            if (this.player.money >= GAME_CONSTANTS.WIN_MONEY_GOAL) {
+                this.time.delayedCall(2500, () => this.handleVictory());
+            }
+        } else {
+            this.showFeedback(result.message, 0xe67e22);
+        }
+
+        this.time.delayedCall(2500, () => {
+            this.isInteracting = false;
+        });
     }
 
     startCombat() {
@@ -450,8 +559,8 @@ class GameScene extends Phaser.Scene {
         // Mensaje de victoria
         const victoryText = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 - 50,
-            '¡ENTREGA COMPLETADA!',
+            this.cameras.main.height / 2 - 80,
+            '¡OBJETIVO CUMPLIDO!',
             {
                 fontSize: '48px',
                 color: '#f39c12',
@@ -464,20 +573,23 @@ class GameScene extends Phaser.Scene {
         victoryText.setDepth(8001);
         victoryText.setScrollFactor(0);
 
-        // Mensaje del cliente
-        const dialogText = this.add.text(
+        // Estadísticas
+        const statsText = this.add.text(
             this.cameras.main.width / 2,
-            this.cameras.main.height / 2 + 20,
-            '"¡Gracias por el ánfora!\nEres un alfarero excelente."',
+            this.cameras.main.height / 2 - 10,
+            `Dinero final: $${this.player.money}\n` +
+            `Viajes completados: ${this.stats.tripsCompleted}\n` +
+            `Ánforas perdidas: ${this.stats.amphorasLost}`,
             {
-                fontSize: '18px',
+                fontSize: '16px',
                 color: '#ffffff',
-                align: 'center'
+                align: 'center',
+                lineSpacing: 8
             }
         );
-        dialogText.setOrigin(0.5);
-        dialogText.setDepth(8001);
-        dialogText.setScrollFactor(0);
+        statsText.setOrigin(0.5);
+        statsText.setDepth(8001);
+        statsText.setScrollFactor(0);
 
         // Botón para reiniciar
         const playAgainButton = this.add.rectangle(
