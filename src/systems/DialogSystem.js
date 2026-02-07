@@ -11,7 +11,7 @@ class DialogSystem {
     create() {
         const { width, height } = this.scene.cameras.main;
 
-        // Caja de diálogo
+        // Caja de diálogo (fija a la cámara)
         this.dialogBox = this.scene.add.rectangle(
             width / 2,
             height - 100,
@@ -21,10 +21,11 @@ class DialogSystem {
             0.8
         );
         this.dialogBox.setStrokeStyle(2, 0xf39c12);
-        this.dialogBox.setDepth(1000);
+        this.dialogBox.setDepth(5000);
+        this.dialogBox.setScrollFactor(0);
         this.dialogBox.setVisible(false);
 
-        // Texto del diálogo
+        // Texto del diálogo (fijo a la cámara)
         this.dialogText = this.scene.add.text(
             30,
             height - 170,
@@ -35,10 +36,13 @@ class DialogSystem {
                 wordWrap: { width: width - 80 }
             }
         );
-        this.dialogText.setDepth(1001);
+        this.dialogText.setDepth(5001);
+        this.dialogText.setScrollFactor(0);
         this.dialogText.setVisible(false);
 
-        console.log('DialogSystem creado');
+        if (DEBUG_MODE.logStates) {
+            console.log('DialogSystem creado');
+        }
     }
 
     show(text, options, callback) {
@@ -67,7 +71,7 @@ class DialogSystem {
         optionsData.forEach((option, index) => {
             const x = 50 + (index * spacing);
 
-            // Botón
+            // Botón (fijo a la cámara)
             const button = this.scene.add.rectangle(
                 x,
                 startY,
@@ -77,10 +81,11 @@ class DialogSystem {
                 1
             );
             button.setStrokeStyle(2, 0x2980b9);
-            button.setDepth(1001);
+            button.setDepth(5001);
+            button.setScrollFactor(0);
             button.setInteractive({ useHandCursor: true });
 
-            // Texto del botón
+            // Texto del botón (fijo a la cámara)
             const buttonText = this.scene.add.text(
                 x,
                 startY,
@@ -91,7 +96,8 @@ class DialogSystem {
                 }
             );
             buttonText.setOrigin(0.5);
-            buttonText.setDepth(1002);
+            buttonText.setDepth(5002);
+            buttonText.setScrollFactor(0);
 
             // Hover effect
             button.on('pointerover', () => {

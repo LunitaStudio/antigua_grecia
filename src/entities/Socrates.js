@@ -27,6 +27,15 @@ class Socrates {
         // Stats
         this.pesadez = GAME_CONSTANTS.SOCRATES_PESADEZ_MAX;
 
+        // Patrol bounds (limitado a la plaza)
+        const { TILE_SIZE, ZONES } = GAME_CONSTANTS;
+        this.patrolBounds = {
+            left: ZONES.PLAZA.start * TILE_SIZE,
+            right: (ZONES.PLAZA.end + 1) * TILE_SIZE,
+            top: TILE_SIZE,
+            bottom: (GAME_CONSTANTS.MAP_HEIGHT - 1) * TILE_SIZE
+        };
+
         // Para wandering idle
         this.idleTimer = 0;
         this.idleDirection = { x: 0, y: 0 };
@@ -44,10 +53,18 @@ class Socrates {
             player.sprite.y
         );
 
+        // Verificar si el jugador está fuera de la plaza
+        const playerInPlaza = this.isInPlaza(player.sprite.x);
+
+        // Si el jugador salió de la plaza, volver a IDLE
+        if (!playerInPlaza && this.state !== GAME_CONSTANTS.SOCRATES_STATES.IDLE) {
+            this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
+        }
+
         // State machine transitions
         switch(this.state) {
             case GAME_CONSTANTS.SOCRATES_STATES.IDLE:
-                this.updateIdle(distance);
+                this.updateIdle(distance, playerInPlaza);
                 break;
 
             case GAME_CONSTANTS.SOCRATES_STATES.DETECT:
@@ -62,9 +79,12 @@ class Socrates {
                 this.updateEngage(player);
                 break;
         }
+
+        // Asegurar que Sócrates no salga de sus bounds
+        this.enforceBounds();
     }
 
-    updateIdle(distance) {
+    updateIdle(distance, playerInPlaza) {
         // Wandering behavior
         this.idleTimer += this.scene.game.loop.delta;
 
@@ -92,8 +112,8 @@ class Socrates {
             this.sprite.play(`oldman_idle_${this.currentDirection}`, true);
         }
 
-        // Detectar jugador
-        if (distance <= GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
+        // Detectar jugador (solo si está en la plaza)
+        if (playerInPlaza && distance <= GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
             this.setState(GAME_CONSTANTS.SOCRATES_STATES.DETECT);
         }
 
@@ -159,7 +179,9 @@ class Socrates {
 
         this.updateStateVisual();
 
-        console.log(`Sócrates: ${oldState} → ${newState}`);
+        if (DEBUG_MODE.logStates) {
+            console.log(`Sócrates: ${oldState} → ${newState}`);
+        }
     }
 
     updateStateVisual() {
@@ -196,5 +218,26 @@ class Socrates {
 
     getPosition() {
         return { x: this.sprite.x, y: this.sprite.y };
+    }
+
+    isInPlaza(x) {
+        return x >= this.patrolBounds.left && x <= this.patrolBounds.right;
+    }
+
+    enforceBounds() {
+        // Mantener a Sócrates dentro de sus bounds
+        if (this.sprite.x < this.patrolBounds.left) {
+            this.sprite.x = this.patrolBounds.left;
+        } else if (this.sprite.x > this.patrolBounds.right) {
+            this.sprite.x = this.patrolBounds.right;
+        }
+
+        if (this.sprite.y < this.patrolBounds.top) {
+            this.sprite.y = this.patrolBounds.top;
+        } else if (this.sprite.y > this.patrolBounds.bottom) {
+            this.sprite.y = this.patrolBounds.bottom;
+        }
+
+        this.shadow.setPosition(this.sprite.x, this.sprite.y + 6);
     }
 }

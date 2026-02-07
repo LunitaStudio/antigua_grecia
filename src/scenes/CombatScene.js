@@ -15,40 +15,40 @@ class CombatScene extends Phaser.Scene {
         const { width, height } = this.cameras.main;
 
         // Fondo oscuro
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9);
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.9).setDepth(0);
 
         // Título
         this.add.text(width / 2, 50, '¡COMBATE FILOSÓFICO!', {
             fontSize: '32px',
             color: '#e74c3c',
             fontStyle: 'bold'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         // Representaciones de los combatientes
         // Jugador
-        this.add.rectangle(150, 200, 60, 60, 0x3498db);
+        this.add.rectangle(150, 200, 60, 60, 0x3498db).setDepth(50);
         this.add.text(150, 280, 'Alfarero', {
             fontSize: '18px',
             color: '#ffffff'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         // Enemigo
-        this.add.rectangle(width - 150, 200, 60, 60, 0xe74c3c);
+        this.add.rectangle(width - 150, 200, 60, 60, 0xe74c3c).setDepth(50);
         this.add.text(width - 150, 280, 'Sócrates', {
             fontSize: '18px',
             color: '#ffffff'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         // Stats
         this.playerStatsText = this.add.text(150, 320, '', {
             fontSize: '14px',
             color: '#3498db'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         this.enemyStatsText = this.add.text(width - 150, 320, '', {
             fontSize: '14px',
             color: '#e74c3c'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         // Log de combate
         this.logBackground = this.add.rectangle(
@@ -58,7 +58,7 @@ class CombatScene extends Phaser.Scene {
             120,
             0x2c3e50,
             0.9
-        );
+        ).setDepth(80);
 
         this.combatLogText = this.add.text(
             30,
@@ -69,14 +69,14 @@ class CombatScene extends Phaser.Scene {
                 color: '#ffffff',
                 wordWrap: { width: width - 80 }
             }
-        );
+        ).setDepth(100);
 
         // Indicador de turno
         this.turnIndicator = this.add.text(width / 2, 400, '', {
             fontSize: '18px',
             color: '#f39c12',
             fontStyle: 'bold'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(100);
 
         // Menú de acciones
         this.createActionMenu();
@@ -106,6 +106,7 @@ class CombatScene extends Phaser.Scene {
             // Botón
             const button = this.add.rectangle(x, startY, 85, 35, action.color);
             button.setStrokeStyle(2, 0xffffff);
+            button.setDepth(100);
             button.setInteractive({ useHandCursor: true });
 
             // Texto
@@ -113,7 +114,7 @@ class CombatScene extends Phaser.Scene {
                 fontSize: '12px',
                 color: '#ffffff',
                 fontStyle: 'bold'
-            }).setOrigin(0.5);
+            }).setOrigin(0.5).setDepth(101);
 
             // Hover
             button.on('pointerover', () => {
@@ -223,7 +224,7 @@ class CombatScene extends Phaser.Scene {
             color: resultColor,
             fontStyle: 'bold',
             align: 'center'
-        }).setOrigin(0.5);
+        }).setOrigin(0.5).setDepth(200);
 
         result.setAlpha(0);
         this.tweens.add({
@@ -238,7 +239,7 @@ class CombatScene extends Phaser.Scene {
             height - 50,
             'Click para continuar',
             { fontSize: '16px', color: '#ffffff' }
-        ).setOrigin(0.5);
+        ).setOrigin(0.5).setDepth(200);
 
         this.input.once('pointerdown', () => {
             this.scene.stop();

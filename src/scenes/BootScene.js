@@ -25,6 +25,11 @@ class BootScene extends Phaser.Scene {
             frameHeight: 16
         });
 
+        this.load.spritesheet('villager', 'assets/sprites/villager.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
+
         // Cargar tilesets
         this.load.image('tileset_floor', 'assets/tilesets/floor.png');
         this.load.image('tileset_house', 'assets/tilesets/house.png');
@@ -36,7 +41,12 @@ class BootScene extends Phaser.Scene {
         // Cargar sombra
         this.load.image('shadow', 'assets/sprites/shadow.png');
 
-        console.log('BootScene: Cargando assets reales');
+        // Cargar emotes
+        this.load.image('exclamation', 'assets/ui/emotes/exclamation.png');
+
+        if (DEBUG_MODE.logStates) {
+            console.log('BootScene: Cargando assets reales');
+        }
     }
 
     create() {
@@ -46,7 +56,12 @@ class BootScene extends Phaser.Scene {
         // Crear animaciones para Sócrates (oldman)
         this.createCharacterAnimations('oldman');
 
-        console.log('BootScene: Animaciones creadas, iniciando GameScene');
+        // Crear animaciones para el cliente (villager)
+        this.createCharacterAnimations('villager');
+
+        if (DEBUG_MODE.logStates) {
+            console.log('BootScene: Animaciones creadas, iniciando GameScene');
+        }
         this.scene.start('GameScene');
     }
 

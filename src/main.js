@@ -9,5 +9,7 @@ GameConfig.scene = [
 // Inicializar juego
 const game = new Phaser.Game(GameConfig);
 
-console.log('Antigua Grecia RPG - Sprint 1');
-console.log('Versión: Placeholder con mecánicas core');
+if (DEBUG_MODE.logStates) {
+    console.log('Antigua Grecia RPG - Sprint 1.5');
+    console.log('Debug Mode:', DEBUG_MODE);
+}

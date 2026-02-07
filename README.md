@@ -1,146 +1,265 @@
-# Antigua Grecia RPG
+# Antigua Grecia RPG 🏛️
 
 Juego RPG top-down cómico donde sos un alfarero griego que debe cruzar el ágora de Atenas para entregar ánforas, pero Sócrates te persigue con preguntas filosóficas.
 
-## Sprint 1 - Mecánicas Core + Sprites Reales ✅
+## 🎮 Estado Actual: Sprint 1.5 Completo
 
-### Características Implementadas
+### Win Condition Implementada
+**Objetivo**: Llevá el ánfora desde la calle izquierda hasta el cliente (NPC con `!`) en la calle derecha, esquivando a Sócrates en la plaza central.
 
-#### Mapa
-- Ágora simple con colores tierra/arena
-- Piso con variación procedural
-- Obstáculos: columnas y puestos de mercado con decoración
-- Bordes colisionables (muros marrones)
+---
 
-#### Protagonista (Sprite Animado)
+## ✨ Características Implementadas
+
+### 🗺️ Mapa de 3 Zonas (40x18 tiles)
+
+```
+[════════════════════════════════════════]
+║  Calle     ║        Plaza         ║ Calle    ║
+║  Izquierda ║       Central        ║ Derecha  ║
+║  (spawn)   ║     (Sócrates)       ║ (cliente)║
+║            ║  ◆ columnas          ║    !     ║
+║            ║  ■ puestos mercado   ║          ║
+[════════════════════════════════════════]
+```
+
+**Zonas:**
+- **Calle Izquierda** (tiles 0-7): Pasillo angosto donde spawnea el jugador - zona segura
+- **Plaza Central** (tiles 8-28): Ágora amplia con obstáculos, Sócrates patrulla aquí
+- **Calle Derecha** (tiles 29-39): Pasillo angosto hacia el objetivo final
+
+**Cámara:**
+- Sigue al jugador suavemente con lerp 0.1
+- UI fija a la cámara (no se mueve con el scroll)
+- Bounds del mundo: 1280x576 píxeles
+
+### 👤 Protagonista (Sprite Animado)
+
 - **Sprite**: Boy del pack Ninja Adventure
-- Animaciones de walk en 4 direcciones (up, down, left, right)
-- Idle cuando está quieto
-- Sombra dinámica
-- Movimiento con WASD o flechas
-- Colisiones con obstáculos
-- Sistema de stats (Paciencia: 100)
-- Puede portar ánforas
+- **Animaciones**: Walk 4 direcciones + idle (8 animaciones totales)
+- **Movimiento**: WASD o flechas (150 px/s)
+- **Sombra**: Dinámica que sigue al personaje
+- **Stats**: Paciencia 100 pts
+- **Colisiones**: Con obstáculos y bordes
+- **Spawn**: Calle izquierda (tile 4, 9)
 
-#### Sócrates NPC (Sprite Animado)
+### 🧙 Sócrates NPC (IA con State Machine)
+
 - **Sprite**: OldMan2 del pack Ninja Adventure
-- Animaciones de walk y idle en 4 direcciones
-- Sombra dinámica
-- State machine con 4 estados:
-  - **IDLE**: Wandering aleatorio (sin tint)
-  - **DETECT**: Detecta al jugador en radio (tint amarillo)
-  - **PURSUE**: Persigue al jugador (tint rojo)
-  - **ENGAGE**: Alcanza al jugador (tint magenta)
-- Cambio visual de color según estado (tint)
+- **Patrulla Limitada**: Solo se mueve en la plaza (tiles 8-28)
+- **Estados Visuales** (cambio de color con tint):
+  - Sin color: IDLE (wandering aleatorio)
+  - Amarillo: DETECT (te vio)
+  - Rojo: PURSUE (te persigue)
+  - Magenta: ENGAGE (te alcanzó)
+- **Comportamiento Inteligente**:
+  - Si salís de la plaza → vuelve a IDLE
+  - No puede salir de sus bounds
+  - Patrulla aleatoria cuando está idle
+- **Velocidad**: 100 px/s (más lento que el jugador)
+- **Radio de detección**: 200 px
+- **Radio de engagement**: 40 px
+- **Spawn**: Centro de la plaza (tile 18, 9)
 
-#### Sistema de Diálogo
-- Caja de texto en la parte inferior
-- Opciones clickeables
-- Se activa cuando Sócrates te alcanza
-- Opciones: ARGUMENTAR, IGNORAR, HUIR
+### 🎯 Cliente NPC (Win Condition)
 
-#### Combate por Turnos
-- Estilo Pokémon con pantalla dedicada
-- Menú de acciones: ARGUMENTAR, IGNORAR, ÁNFORA, HUIR
-- Turnos alternados
-- Stats:
-  - **Paciencia** (Jugador): 100
-  - **Pesadez** (Sócrates): 100
-- Condiciones de victoria/derrota
+- **Sprite**: Villager del pack Ninja Adventure
+- **Ubicación**: Final de la calle derecha (tile 37, 9)
+- **Indicador**: `!` flotante con animación bounce
+- **Interacción**: Al tocarlo → pantalla de victoria
+- **Victoria**:
+  - Mensaje: "¡Entrega completada! Gracias por el ánfora."
+  - Diálogo del cliente
+  - Botón "Jugar de Nuevo" para reiniciar
 
-## Cómo Ejecutar
+### 💬 Sistema de Diálogo
+
+Se activa cuando Sócrates te alcanza (estado ENGAGE):
+- **Pausa la física** mientras dialogás
+- **Opciones**:
+  - ARGUMENTAR: 50% éxito (Sócrates se aleja) / 50% entra en combate
+  - IGNORAR: -10 paciencia, 40% chance de combate después
+  - HUIR: 50% éxito / 50% falla y puede iniciar combate
+- **UI**: Fija a la cámara, siempre visible
+
+### ⚔️ Combate por Turnos (Estilo Pokémon)
+
+**Acciones del Jugador:**
+- **ARGUMENTAR**: 50% acierta (10-30 daño) / 50% falla (-5-20 paciencia)
+- **IGNORAR**: -5-15 paciencia
+- **ÁNFORA**: 30 daño garantizado (uso único - solo 1 por partida)
+- **HUIR**: 50% chance de escapar y volver al juego
+
+**Ataques de Sócrates (aleatorios):**
+- "¿Qué es la justicia?" (10-25 daño a paciencia)
+- Cuestiona tus creencias (10-25 daño)
+- Ironía socrática (10-25 daño)
+
+**Condiciones:**
+- **Victoria**: Sócrates llega a 0 pesadez → vuelve al juego
+- **Derrota**: Jugador llega a 0 paciencia → reinicia la escena completa
+- **Log de combate**: Muestra las últimas 4 acciones
+
+### 🎨 UI & Controles
+
+**Controles:**
+- **WASD / Flechas**: Mover al alfarero
+- **Mouse**: Seleccionar opciones de diálogo/combate
+
+**UI Permanente (Fixed a cámara):**
+- **Instrucciones** (superior izquierda)
+- **Stats Panel** (superior derecha):
+  - Paciencia del jugador
+  - Pesadez de Sócrates
+  - Estado actual de Sócrates
+- **Depth optimizado**: Todos los elementos UI por encima del debug de física
+
+---
+
+## 🚀 Cómo Ejecutar
 
 ```bash
 # Instalar dependencias
 npm install
 
-# Iniciar servidor
+# Iniciar servidor de desarrollo
 npm start
 ```
 
-El juego se abrirá automáticamente en http://localhost:8080
+El juego se abre automáticamente en **http://localhost:8080**
 
-## Estructura del Proyecto
+---
+
+## 📂 Estructura del Proyecto
 
 ```
 antigua_grecia/
+├── assets/
+│   ├── sprites/
+│   │   ├── boy.png          # Protagonista
+│   │   ├── oldman.png       # Sócrates
+│   │   ├── villager.png     # Cliente NPC
+│   │   └── shadow.png       # Sombras
+│   ├── tilesets/
+│   │   ├── floor.png        # (preparado para Sprint 2)
+│   │   └── house.png        # (preparado para Sprint 2)
+│   └── ui/
+│       ├── emotes/
+│       │   └── exclamation.png  # Indicador !
+│       ├── dialogbox.png    # (preparado)
+│       └── dialogbox_simple.png # (preparado)
+│
+├── src/
+│   ├── config.js            # Constantes globales (zonas, spawns, velocidades)
+│   ├── main.js              # Entry point
+│   ├── entities/
+│   │   ├── Player.js        # Clase del jugador con animaciones
+│   │   ├── Socrates.js      # IA de Sócrates con state machine
+│   │   └── ClientNPC.js     # Cliente objetivo (win condition)
+│   ├── systems/
+│   │   ├── DialogSystem.js  # Sistema de diálogos (fixed a cámara)
+│   │   └── CombatSystem.js  # Lógica de combate por turnos
+│   └── scenes/
+│       ├── BootScene.js     # Carga de assets y creación de animaciones
+│       ├── GameScene.js     # Escena principal con mapa de 3 zonas
+│       ├── CombatScene.js   # Escena de combate
+│       └── DialogScene.js   # (reservada para futuro)
+│
 ├── index.html
 ├── package.json
-├── src/
-│   ├── config.js              # Configuración de Phaser y constantes
-│   ├── main.js                # Punto de entrada
-│   ├── entities/
-│   │   ├── Player.js          # Clase del jugador
-│   │   └── Socrates.js        # Clase de Sócrates con IA
-│   ├── systems/
-│   │   ├── DialogSystem.js    # Sistema de diálogos
-│   │   └── CombatSystem.js    # Lógica de combate
-│   └── scenes/
-│       ├── BootScene.js       # Carga inicial
-│       ├── GameScene.js       # Escena principal
-│       ├── CombatScene.js     # Escena de combate
-│       └── DialogScene.js     # Reservada para futuro
-└── Ninja Adventure - Asset Pack/  # Assets (no usados en Sprint 1)
+├── README.md
+├── ASSETS_STRUCTURE.md      # Documentación del pack Ninja Adventure
+└── .gitignore
 ```
 
-## Controles
+---
 
-- **WASD / Flechas**: Mover al alfarero
-- **Mouse**: Seleccionar opciones de diálogo y combate
+## 🎯 Cómo Jugar
 
-## Mecánicas de Juego
+1. **Inicio**: Spawneas en la calle izquierda (zona segura)
+2. **Objetivo**: Llegar al NPC con `!` en la calle derecha
+3. **Obstáculo**: Cruzar la plaza donde Sócrates patrulla
+4. **Estrategia**:
+   - Usá las columnas y puestos como cobertura
+   - Sócrates es más lento que vos
+   - Si te alcanza, podés intentar HUIR o ARGUMENTAR
+   - Las calles son zonas seguras (Sócrates no puede entrar)
+5. **Victoria**: Tocá al cliente para completar la entrega
 
-### Diálogo con Sócrates
-Cuando Sócrates te alcanza:
-- **ARGUMENTAR**: 50% chance de éxito. Si falla, combate.
-- **IGNORAR**: Pierdes 10 paciencia. Riesgo de combate.
-- **HUIR**: 50% chance de escapar.
+---
 
-### Combate
-- **ARGUMENTAR**: 50% de acertar (10-30 daño) o fallar (pierdes 5-20 paciencia)
-- **IGNORAR**: Pierdes 5-15 paciencia
-- **ÁNFORA**: 30 daño garantizado (uso único)
-- **HUIR**: 50% chance de escapar
+## 🔧 Stack Tecnológico
 
-Sócrates ataca con:
-- Preguntar "¿Qué es la justicia?"
-- Cuestionar tus creencias
-- Usar ironía socrática
-
-## Assets Integrados
-
-### Sprites de Personajes
-- `assets/sprites/boy.png` - Protagonista (Boy)
-- `assets/sprites/oldman.png` - Sócrates (OldMan2)
-- `assets/sprites/shadow.png` - Sombras para los personajes
-
-### Tilesets
-- `assets/tilesets/floor.png` - Tiles de piso (preparado para uso futuro)
-- `assets/tilesets/house.png` - Tiles de estructuras (preparado para uso futuro)
-
-### UI
-- `assets/ui/dialogbox.png` - Caja de diálogo (preparado para uso futuro)
-- `assets/ui/dialogbox_simple.png` - Caja de diálogo simple (preparado para uso futuro)
-
-**Nota**: Los tilesets y UI están copiados pero aún no integrados. El mapa actual usa rectángulos de colores con mejor estética.
-
-## Próximos Sprints
-
-- Sprint 2: Integrar tilesets reales para el mapa (TilesetFloor, TilesetHouse)
-- Sprint 3: Sistema de objetivos y win conditions (entregar ánforas)
-- Sprint 4: Múltiples NPCs y diálogos variados
-- Sprint 5: Items y power-ups
-- Sprint 6: Integrar cajas de diálogo del pack de UI
-
-## Stack Tecnológico
-
-- **Phaser 3.80.1**: Motor de juego
-- **Vanilla JavaScript**: Sin frameworks adicionales
+- **Phaser 3.80.1**: Motor de juego HTML5
+- **Vanilla JavaScript ES6**: Sin frameworks adicionales
+- **Ninja Adventure Asset Pack**: Sprites pixel art (CC0 license)
 - **http-server**: Servidor local de desarrollo
 
-## Debug
+---
 
-El modo debug de física está activado. Se muestran:
-- Cuerpos de colisión (verde)
-- Velocidades
-- Bounding boxes
+## 🐛 Debug
+
+Podés activar/desactivar opciones de debug en `src/config.js`:
+
+```javascript
+const DEBUG_MODE = {
+    physics: false,  // Cambiar a true para ver hitboxes (verde)
+    showFPS: false,  // Cambiar a true para ver contador de FPS
+    logStates: true  // Cambiar a false para ocultar logs en consola
+};
+```
+
+**Debug Physics** muestra:
+- Cuerpos de colisión (hitboxes en verde)
+- Velocidades y direcciones
+- Bounding boxes de todos los objetos
+
+**Show FPS**: Contador de frames por segundo en la esquina inferior izquierda
+
+**Log States**: Mensajes en consola sobre cambios de estado de Sócrates y eventos del juego
+
+---
+
+## 📋 Próximos Sprints
+
+- **Sprint 2**: Tilesets reales con Phaser Tilemaps
+- **Sprint 3**: Múltiples niveles y dificultad progresiva
+- **Sprint 4**: Más NPCs (ciudadanos, otros filósofos)
+- **Sprint 5**: Sistema de items y power-ups
+- **Sprint 6**: Diálogos más variados y narrativa
+- **Sprint 7**: Música y efectos de sonido
+
+---
+
+## 📜 Licencia
+
+Este proyecto usa el **Ninja Adventure Asset Pack** bajo licencia CC0 (dominio público).
+
+**Créditos a:**
+- [Pixel-boy](https://pixel-boy.itch.io/)
+- [AAA](https://www.instagram.com/challenger.aaa/)
+- [Pack completo](https://pixel-boy.itch.io/ninja-adventure-asset-pack)
+
+---
+
+## 🎓 Notas de Desarrollo
+
+### Cambios Recientes (Sprint 1.5)
+
+✅ Mapa expandido de 25x18 a 40x18 tiles
+✅ Diseño de 3 zonas (2 calles + plaza)
+✅ Cámara que sigue al jugador
+✅ Win condition implementada (NPC cliente)
+✅ Sócrates limitado a la plaza
+✅ UI fixed a cámara con depth correcto
+✅ Sistema de victoria con "Jugar de Nuevo"
+
+### Conocidos Issues
+
+- El mapa usa placeholders de colores (no tilesets reales aún)
+- Un solo nivel por ahora
+- Sin música ni SFX
+
+---
+
+¡Divertite esquivando a Sócrates! 🏃‍♂️💨🧙
