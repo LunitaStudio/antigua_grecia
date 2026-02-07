@@ -1,0 +1,26 @@
+# Ninja Adventure Asset Pack (recurso externo, muy grande)
+Ninja Adventure - Asset Pack/
+
+# Claude memory
+.claude/
+
+# Dependencies
+node_modules/
+
+# Logs
+npm-debug.log*
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporal
+*.tmp
+.cache/
