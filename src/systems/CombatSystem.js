@@ -2,141 +2,153 @@ class CombatSystem {
     constructor(scene) {
         this.scene = scene;
         this.player = null;
-        this.enemy = null;
+        this.socrates = null;
+        this.question = null;
         this.isPlayerTurn = true;
         this.combatLog = [];
     }
 
-    init(player, enemy) {
+    init(player, question) {
+        // Player usa su paciencia GLOBAL (no copia local)
         this.player = {
             name: 'Alfarero',
-            patience: player.patience,
-            maxPatience: GAME_CONSTANTS.PLAYER_PATIENCE_MAX,
-            hasAmphora: player.hasAmphora
+            patienceRef: player, // Referencia directa al jugador
+            amphoras: player.amphoras
         };
 
-        this.enemy = {
+        // Sócrates tiene Intensidad en combate
+        this.socrates = {
             name: 'Sócrates',
-            pesadez: enemy.pesadez,
-            maxPesadez: GAME_CONSTANTS.SOCRATES_PESADEZ_MAX
+            intensity: GAME_CONSTANTS.SOCRATES_INTENSITY_MAX,
+            maxIntensity: GAME_CONSTANTS.SOCRATES_INTENSITY_MAX
         };
 
+        this.question = question;
         this.isPlayerTurn = true;
-        this.combatLog = ['¡Sócrates te alcanzó!'];
+        this.combatLog = [`Sócrates: "${question.layer2.question}"`];
+
+        if (DEBUG_MODE.logStates) {
+            console.log('CombatSystem iniciado (Capa 2):', question.theme);
+        }
     }
 
-    executeAction(action) {
+    executePlayerAction(option) {
         let result = { success: false, message: '', combatEnded: false };
 
-        if (this.isPlayerTurn) {
-            result = this.playerAction(action);
-        } else {
-            result = this.enemyAction();
+        // Caso especial: Huir
+        if (option.action === 'flee') {
+            const fleeChance = Math.random();
+            if (fleeChance > 0.5) {
+                result.message = '¡Lograste escapar de Sócrates!';
+                result.success = true;
+                result.combatEnded = true;
+                result.outcome = 'fled';
+            } else {
+                result.message = 'No pudiste escapar... Sócrates bloquea tu camino.';
+                // Sócrates contraataca por intentar huir
+                const counterDamage = Math.floor(Math.random() * 10) + 10;
+                this.player.patienceRef.patience -= counterDamage;
+                result.message += `\nPerdiste ${counterDamage} paciencia.`;
+            }
+            return result;
         }
 
-        this.combatLog.push(result.message);
+        // Caso especial: Ánfora
+        if (option.action === 'amphora') {
+            if (this.player.amphoras > 0) {
+                const amphoraDamage = 40; // Golpe directo fuerte
+                this.socrates.intensity -= amphoraDamage;
+                this.player.patienceRef.useAmphora();
+                this.player.amphoras = this.player.patienceRef.amphoras;
+                this.scene.stats.amphorasLost++;
 
-        // Alternar turno si el combate no terminó
-        if (!result.combatEnded) {
-            this.isPlayerTurn = !this.isPlayerTurn;
+                result.message = `¡CRASH! Le tiraste un ánfora a Sócrates. Perdió ${amphoraDamage} intensidad.`;
+                result.success = true;
+
+                if (DEBUG_MODE.logStates) {
+                    console.log('Ánfora lanzada en combate');
+                }
+            } else {
+                result.message = '¡No tenés ánforas!';
+                return result;
+            }
         }
 
-        return result;
-    }
+        // Respuestas filosóficas de Layer 2
+        if (option.quality) {
+            const chance = getChanceByQuality(option.quality);
+            const roll = Math.random();
+            const success = roll < chance;
 
-    playerAction(action) {
-        let result = { success: false, message: '', combatEnded: false };
+            if (success) {
+                const damage = option.damage;
+                this.socrates.intensity -= damage;
+                result.message = `Respondiste: "${option.text}"\nSócrates pierde ${damage} intensidad.`;
+                result.success = true;
 
-        switch(action) {
-            case 'ARGUMENTAR':
-                const argumentDamage = Math.floor(Math.random() * 20) + 10;
-                const argumentSuccess = Math.random() > 0.5;
-
-                if (argumentSuccess) {
-                    this.enemy.pesadez -= argumentDamage;
-                    result.message = `Argumentaste bien. Sócrates pierde ${argumentDamage} pesadez.`;
-                    result.success = true;
-                } else {
-                    const counterDamage = Math.floor(Math.random() * 15) + 5;
-                    this.player.patience -= counterDamage;
-                    result.message = `Tu argumento falló. Perdiste ${counterDamage} paciencia.`;
+                if (DEBUG_MODE.logStates) {
+                    console.log(`Respuesta ${option.quality}: ${(chance*100).toFixed(0)}% chance, roll ${(roll*100).toFixed(0)}% → ÉXITO (-${damage} intensidad)`);
                 }
-                break;
+            } else {
+                result.message = `Respondiste: "${option.text}"\n¡Sócrates refuta tu argumento!`;
 
-            case 'IGNORAR':
-                const ignoreDamage = Math.floor(Math.random() * 10) + 5;
-                this.player.patience -= ignoreDamage;
-                result.message = `Ignoraste a Sócrates pero perdiste ${ignoreDamage} paciencia.`;
-                break;
-
-            case 'ANFORA':
-                if (this.player.hasAmphora) {
-                    const amphoraDamage = 30;
-                    this.enemy.pesadez -= amphoraDamage;
-                    this.player.hasAmphora = false;
-                    result.message = `¡Tiraste el ánfora! Sócrates pierde ${amphoraDamage} pesadez.`;
-                    result.success = true;
-                } else {
-                    result.message = '¡Ya no tenés ánforas!';
+                if (DEBUG_MODE.logStates) {
+                    console.log(`Respuesta ${option.quality}: ${(chance*100).toFixed(0)}% chance, roll ${(roll*100).toFixed(0)}% → FALLÓ`);
                 }
-                break;
-
-            case 'HUIR':
-                const fleeChance = Math.random();
-                if (fleeChance > 0.5) {
-                    result.message = '¡Lograste escapar!';
-                    result.success = true;
-                    result.combatEnded = true;
-                } else {
-                    result.message = 'No pudiste escapar...';
-                }
-                break;
+            }
         }
 
-        // Verificar si ganó el jugador
-        if (this.enemy.pesadez <= 0) {
-            result.message += '\n¡Sócrates se rindió! Ganaste.';
+        // Verificar victoria
+        if (this.socrates.intensity <= 0) {
+            result.message += '\n\n¡Sócrates se rinde! "Quizás tengas razón, alfarero..."';
             result.combatEnded = true;
             result.success = true;
+            result.outcome = 'victory';
         }
 
-        // Verificar si perdió el jugador
-        if (this.player.patience <= 0) {
-            result.message += '\n¡Perdiste toda tu paciencia! Game Over.';
+        // Verificar derrota
+        if (this.player.patienceRef.patience <= 0) {
+            result.message += '\n\n¡Perdiste toda tu paciencia!';
             result.combatEnded = true;
             result.success = false;
+            result.outcome = 'defeat';
         }
 
         return result;
     }
 
-    enemyAction() {
-        const actions = ['PREGUNTAR', 'CUESTIONAR', 'IRONIZAR'];
-        const action = Phaser.Utils.Array.GetRandom(actions);
-        const damage = Math.floor(Math.random() * 15) + 10;
+    executeSocratesAction() {
+        // Sócrates hace una NUEVA pregunta del banco
+        const newQuestion = getRandomQuestion();
+        const oldQuestion = this.question;
+        this.question = newQuestion;
 
-        this.player.patience -= damage;
+        // Mensaje de la nueva pregunta
+        let result = {
+            success: true,
+            message: `Sócrates: ${newQuestion.layer2.question}`,
+            combatEnded: false,
+            questionChanged: true, // Flag para que CombatScene recree el menú
+            oldQuestion: oldQuestion,
+            newQuestion: newQuestion
+        };
 
-        let message = '';
-        switch(action) {
-            case 'PREGUNTAR':
-                message = `Sócrates pregunta "¿Qué es la justicia?". Perdiste ${damage} paciencia.`;
-                break;
-            case 'CUESTIONAR':
-                message = `Sócrates cuestiona tus creencias. Perdiste ${damage} paciencia.`;
-                break;
-            case 'IRONIZAR':
-                message = `Sócrates usa ironía socrática. Perdiste ${damage} paciencia.`;
-                break;
-        }
+        // No hace daño directo, el daño viene de las respuestas del jugador
+        // Pero perder paciencia por pensar en la pregunta
+        const mentalDamage = Math.floor(Math.random() * 5) + 5; // 5-10 de daño mental
+        this.player.patienceRef.patience -= mentalDamage;
+        result.message += `\n(-${mentalDamage} paciencia por pensar en esto)`;
 
-        let result = { success: true, message, combatEnded: false };
-
-        // Verificar si perdió el jugador
-        if (this.player.patience <= 0) {
-            result.message += '\n¡Perdiste toda tu paciencia! Game Over.';
+        // Verificar derrota
+        if (this.player.patienceRef.patience <= 0) {
+            result.message += '\n\n¡Perdiste toda tu paciencia!';
             result.combatEnded = true;
             result.success = false;
+            result.outcome = 'defeat';
+        }
+
+        if (DEBUG_MODE.logStates) {
+            console.log(`Sócrates cambia de pregunta: "${oldQuestion.theme}" → "${newQuestion.theme}" (-${mentalDamage} paciencia)`);
         }
 
         return result;
@@ -144,8 +156,14 @@ class CombatSystem {
 
     getState() {
         return {
-            player: this.player,
-            enemy: this.enemy,
+            player: {
+                name: this.player.name,
+                patience: this.player.patienceRef.patience,
+                maxPatience: this.player.patienceRef.maxPatience,
+                amphoras: this.player.amphoras
+            },
+            socrates: this.socrates,
+            question: this.question,
             isPlayerTurn: this.isPlayerTurn,
             combatLog: this.combatLog
         };

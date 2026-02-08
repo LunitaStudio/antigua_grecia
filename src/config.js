@@ -26,7 +26,7 @@ const GAME_CONSTANTS = {
     SOCRATES_SPEED: 100,
     SOCRATES_DETECT_RADIUS: 200,
     SOCRATES_ENGAGE_RADIUS: 40,
-    SOCRATES_KO_DURATION: 8000, // 8 segundos stunned al recibir ánfora
+    SOCRATES_KO_DURATION: 5000, // 5 segundos stunned al recibir ánfora
     TILE_SIZE: 32,
     MAP_WIDTH: 40,
     MAP_HEIGHT: 18,
@@ -68,6 +68,11 @@ const GAME_CONSTANTS = {
     DIALOG_CHANCE_GOOD: 0.80,    // 80% con respuesta filosófica
     DIALOG_CHANCE_REGULAR: 0.50, // 50% con respuesta práctica
     DIALOG_CHANCE_BAD: 0.20,     // 20% si ignoras
+
+    // Cooldown de Sócrates (tiempo de gracia para escapar)
+    SOCRATES_COOLDOWN_AFTER_DIALOG: 3000,  // 3 seg después de Layer 1 exitoso
+    SOCRATES_COOLDOWN_AFTER_COMBAT: 6000,  // 6 seg después de victoria/huida en combate
+    SOCRATES_COOLDOWN_AFTER_STUNNED: 8000, // 8 seg después de ánfora (incluye KO + gracia)
 
     // Estados de Sócrates
     SOCRATES_STATES: {

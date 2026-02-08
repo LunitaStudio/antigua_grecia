@@ -41,11 +41,29 @@ class Socrates {
         this.idleDirection = { x: 0, y: 0 };
         this.changeDirectionInterval = 2000; // cambiar dirección cada 2 segundos
 
+        // Para estado STUNNED
+        this.stunnedTimer = null;
+
+        // Sistema de cooldown (tiempo de gracia para que el jugador escape)
+        this.cooldownTimer = 0;
+        this.isOnCooldown = false;
+
         // Indicador visual de estado (tint color)
         this.updateStateVisual();
     }
 
     update(player) {
+        // Actualizar cooldown timer
+        if (this.isOnCooldown) {
+            this.cooldownTimer -= this.scene.game.loop.delta;
+            if (this.cooldownTimer <= 0) {
+                this.isOnCooldown = false;
+                if (DEBUG_MODE.logStates) {
+                    console.log('Sócrates: Cooldown terminado, puede detectar de nuevo');
+                }
+            }
+        }
+
         const distance = Phaser.Math.Distance.Between(
             this.sprite.x,
             this.sprite.y,
@@ -77,6 +95,10 @@ class Socrates {
 
             case GAME_CONSTANTS.SOCRATES_STATES.ENGAGE:
                 this.updateEngage(player);
+                break;
+
+            case GAME_CONSTANTS.SOCRATES_STATES.STUNNED:
+                this.updateStunned();
                 break;
         }
 
@@ -112,8 +134,8 @@ class Socrates {
             this.sprite.play(`oldman_idle_${this.currentDirection}`, true);
         }
 
-        // Detectar jugador (solo si está en la plaza)
-        if (playerInPlaza && distance <= GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
+        // Detectar jugador (solo si está en la plaza Y NO está en cooldown)
+        if (!this.isOnCooldown && playerInPlaza && distance <= GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
             this.setState(GAME_CONSTANTS.SOCRATES_STATES.DETECT);
         }
 
@@ -126,12 +148,18 @@ class Socrates {
         this.sprite.play(`oldman_idle_${this.currentDirection}`, true);
         this.shadow.setPosition(this.sprite.x, this.sprite.y + 6);
 
+        // Si está en cooldown, no puede detectar (volver a IDLE)
+        if (this.isOnCooldown) {
+            this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
+            return;
+        }
+
         if (distance > GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
             this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
         } else {
             // Transición a PURSUE después de un momento
             this.scene.time.delayedCall(500, () => {
-                if (this.state === GAME_CONSTANTS.SOCRATES_STATES.DETECT) {
+                if (this.state === GAME_CONSTANTS.SOCRATES_STATES.DETECT && !this.isOnCooldown) {
                     this.setState(GAME_CONSTANTS.SOCRATES_STATES.PURSUE);
                 }
             });
@@ -173,6 +201,55 @@ class Socrates {
         this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
     }
 
+    updateStunned() {
+        // Quieto, haciendo animación de "mareado"
+        this.sprite.body.setVelocity(0);
+        this.sprite.play(`oldman_idle_${this.currentDirection}`, true);
+
+        // Efecto visual de rotación suave (placeholder para custom assets)
+        const time = this.scene.time.now;
+        const wobble = Math.sin(time / 100) * 5; // Oscilar ±5 grados
+        this.sprite.setAngle(wobble);
+
+        this.shadow.setPosition(this.sprite.x, this.sprite.y + 6);
+
+        // El timer automáticamente lo devolverá a IDLE
+    }
+
+    stun() {
+        // Entrar en estado STUNNED por duración definida
+        this.setState(GAME_CONSTANTS.SOCRATES_STATES.STUNNED);
+
+        // Cancelar timer previo si existe
+        if (this.stunnedTimer) {
+            this.stunnedTimer.remove();
+        }
+
+        // Crear timer para volver a IDLE
+        this.stunnedTimer = this.scene.time.delayedCall(
+            GAME_CONSTANTS.SOCRATES_KO_DURATION,
+            () => {
+                this.sprite.setAngle(0); // Resetear rotación
+                this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
+                this.stunnedTimer = null;
+            }
+        );
+
+        if (DEBUG_MODE.logStates) {
+            console.log(`Sócrates STUNNED por ${GAME_CONSTANTS.SOCRATES_KO_DURATION}ms`);
+        }
+    }
+
+    setCooldown(duration) {
+        // Establecer período de gracia antes de poder detectar de nuevo
+        this.isOnCooldown = true;
+        this.cooldownTimer = duration;
+
+        if (DEBUG_MODE.logStates) {
+            console.log(`Sócrates: Cooldown activado por ${duration}ms`);
+        }
+    }
+
     setState(newState) {
         const oldState = this.state;
         this.state = newState;
@@ -198,6 +275,9 @@ class Socrates {
                 break;
             case GAME_CONSTANTS.SOCRATES_STATES.ENGAGE:
                 this.sprite.setTint(0xff00ff); // magenta
+                break;
+            case GAME_CONSTANTS.SOCRATES_STATES.STUNNED:
+                this.sprite.setTint(0x808080); // gris (KO)
                 break;
         }
     }

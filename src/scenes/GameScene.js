@@ -406,56 +406,116 @@ class GameScene extends Phaser.Scene {
     }
 
     handleSocratesEngagement() {
+        this.stats.encountersWithSocrates++;
+
         if (DEBUG_MODE.logStates) {
-            console.log('Sócrates te alcanzó!');
+            console.log('=== ENCUENTRO CON SÓCRATES ===');
         }
 
-        const dialogText = '¡Sócrates te alcanzó!\n"Permíteme preguntarte: ¿Qué es la virtud?"';
+        // CAPA 1: Diálogo rápido
+        this.dialogSystem.showLayer1(
+            this.player,
+            (escapeMethod) => this.onLayer1Success(escapeMethod),
+            (question) => this.onLayer1Fail(question)
+        );
+    }
 
-        const options = [
-            { text: 'ARGUMENTAR', value: 'ARGUMENTAR' },
-            { text: 'IGNORAR', value: 'IGNORAR' },
-            { text: 'HUIR', value: 'HUIR' }
-        ];
+    onLayer1Success(escapeMethod) {
+        // El jugador zafó en Capa 1
+        if (escapeMethod === 'amphora') {
+            // Le tiró un ánfora: Sócrates KO
+            this.showFeedback('💥 ¡CRASH! Sócrates quedó STUNNED', 0xe67e22);
+            this.socrates.stun();
 
-        this.dialogSystem.show(dialogText, options, (choice) => {
-            this.handleDialogChoice(choice);
+            // Cooldown largo: KO + gracia adicional
+            this.socrates.setCooldown(GAME_CONSTANTS.SOCRATES_COOLDOWN_AFTER_STUNNED);
+
+            if (DEBUG_MODE.logStates) {
+                console.log('Layer 1 → ÉXITO (Ánfora). Sócrates STUNNED.');
+            }
+        } else {
+            // Respuesta filosófica exitosa
+            this.showFeedback('¡Buena respuesta! Sócrates se retira...', 0x27ae60);
+            this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
+
+            // Cooldown corto: 3 segundos de gracia
+            this.socrates.setCooldown(GAME_CONSTANTS.SOCRATES_COOLDOWN_AFTER_DIALOG);
+
+            if (DEBUG_MODE.logStates) {
+                console.log('Layer 1 → ÉXITO (Diálogo). Sócrates satisfecho.');
+            }
+        }
+
+        // Regenerar paciencia por zafar
+        this.player.restorePatience(5);
+    }
+
+    onLayer1Fail(question) {
+        // El jugador falló en Capa 1 → CAPA 2: Combate
+        if (DEBUG_MODE.logStates) {
+            console.log('Layer 1 → FALLÓ. Iniciando Layer 2 (Combate)...');
+        }
+
+        this.showFeedback('Sócrates no quedó satisfecho...', 0xe74c3c);
+
+        this.time.delayedCall(1000, () => {
+            this.startCombatLayer2(question);
         });
     }
 
-    handleDialogChoice(choice) {
+    startCombatLayer2(question) {
         if (DEBUG_MODE.logStates) {
-            console.log('Elegiste:', choice);
+            console.log('=== INICIANDO CAPA 2: COMBATE ===');
         }
 
-        if (choice === 'ARGUMENTAR') {
-            // Chance de fallar y entrar en combate
-            const success = Math.random() > 0.5;
+        this.scene.pause();
+        this.scene.launch('CombatScene', {
+            player: this.player,
+            question: question,
+            stats: this.stats,
+            onCombatEnd: (outcome) => this.onCombatLayer2End(outcome)
+        });
+    }
 
-            if (success) {
-                this.showFeedback('¡Buena respuesta! Sócrates se aleja.', 0x27ae60);
-                this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
-            } else {
-                this.startCombat();
-            }
-        } else if (choice === 'IGNORAR') {
-            this.player.takeDamage(10);
-            this.showFeedback('Perdiste 10 paciencia. Sócrates insiste...', 0xe67e22);
+    onCombatLayer2End(outcome) {
+        this.scene.resume();
 
-            // Después de varios IGNORAR, entrar en combate
-            if (Math.random() > 0.6) {
-                this.time.delayedCall(1000, () => this.startCombat());
-            }
-        } else if (choice === 'HUIR') {
-            const escaped = Math.random() > 0.5;
+        if (outcome === 'victory') {
+            // Victoria en combate: Sócrates se retira
+            this.showFeedback('¡Venciste a Sócrates en el debate!', 0x27ae60);
+            this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
 
-            if (escaped) {
-                this.showFeedback('¡Lograste escapar!', 0x27ae60);
-                this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
-            } else {
-                this.showFeedback('¡No pudiste escapar!', 0xe74c3c);
-                this.time.delayedCall(1000, () => this.startCombat());
+            // Cooldown largo: 6 segundos de gracia
+            this.socrates.setCooldown(GAME_CONSTANTS.SOCRATES_COOLDOWN_AFTER_COMBAT);
+
+            // Pequeña regeneración de paciencia
+            this.player.restorePatience(10);
+
+            if (DEBUG_MODE.logStates) {
+                console.log('Layer 2 → VICTORIA. Sócrates derrotado.');
             }
+        } else if (outcome === 'fled') {
+            // Escapó del combate
+            this.showFeedback('Escapaste de Sócrates...', 0xf39c12);
+            this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
+
+            // Cooldown corto: 3 segundos de gracia
+            this.socrates.setCooldown(GAME_CONSTANTS.SOCRATES_COOLDOWN_AFTER_DIALOG);
+
+            if (DEBUG_MODE.logStates) {
+                console.log('Layer 2 → HUIDA. Escapaste.');
+            }
+        } else if (outcome === 'defeat') {
+            // Derrota: Paciencia = 0
+            // TODO: Task #11 - Implementar penalización
+            this.showFeedback('Perdiste toda tu paciencia...', 0xe74c3c);
+
+            if (DEBUG_MODE.logStates) {
+                console.log('Layer 2 → DERROTA. Paciencia agotada.');
+            }
+
+            // Placeholder: Por ahora solo volver a IDLE
+            this.socrates.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
         }
     }
 
@@ -496,17 +556,6 @@ class GameScene extends Phaser.Scene {
 
         this.time.delayedCall(2500, () => {
             this.isInteracting = false;
-        });
-    }
-
-    startCombat() {
-        if (DEBUG_MODE.logStates) {
-            console.log('Iniciando combate...');
-        }
-        this.scene.pause();
-        this.scene.launch('CombatScene', {
-            player: this.player,
-            enemy: this.socrates
         });
     }
 
