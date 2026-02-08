@@ -27,7 +27,8 @@ class CombatScene extends Phaser.Scene {
                 enemy: 0xe74c3c,
                 accent: 0xf39c12
             },
-            barWidth: 220
+            barWidth: 260,
+            menuStartY: 458
         };
 
         this.createBackground();
@@ -62,37 +63,52 @@ class CombatScene extends Phaser.Scene {
     createTopCards() {
         const { width, colors, barWidth } = this.ui;
 
-        // Socrates card
-        this.add.rectangle(140, 130, 250, 135, colors.panel, 0.92)
+        const rowWidth = width - 80;
+        const leftX = width / 2 - rowWidth / 2;
+
+        // ENEMIGO ARRIBA
+        const enemyRowY = 112;
+        this.add.rectangle(width / 2, enemyRowY, rowWidth, 78, colors.panel, 0.93)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.sprite(80, 108, 'oldman', 0).setScale(3.2).setDepth(35);
-        this.add.text(138, 90, 'SOCRATES', {
+        this.add.sprite(leftX + 36, enemyRowY - 4, 'oldman', 0).setScale(3.2).setDepth(35);
+        this.add.text(leftX + 72, enemyRowY - 20, 'SOCRATES', {
             fontSize: '16px',
             color: '#ffc5bf',
             fontStyle: 'bold'
         }).setDepth(35);
-        this.intensityBarBg = this.add.rectangle(30, 142, barWidth, 14, 0x0b1018, 1).setOrigin(0, 0).setDepth(32);
-        this.intensityBar = this.add.rectangle(30, 142, barWidth, 14, colors.enemy, 1).setOrigin(0, 0).setDepth(33);
-        this.intensityText = this.add.text(140, 149, '', {
+
+        this.intensityBarBg = this.add.rectangle(leftX + 72, enemyRowY + 2, barWidth, 14, 0x0b1018, 1)
+            .setOrigin(0, 0)
+            .setDepth(32);
+        this.intensityBar = this.add.rectangle(leftX + 72, enemyRowY + 2, barWidth, 14, colors.enemy, 1)
+            .setOrigin(0, 0)
+            .setDepth(33);
+        this.intensityText = this.add.text(leftX + 72 + (barWidth / 2), enemyRowY + 9, '', {
             fontSize: '12px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(35);
 
-        // Player card
-        this.add.rectangle(width - 140, 130, 250, 135, colors.panel, 0.92)
+        // JUGADOR ABAJO
+        const playerRowY = 420;
+        this.add.rectangle(width / 2, playerRowY, rowWidth - 40, 64, colors.panel, 0.93)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.sprite(width - 200, 108, 'boy', 0).setScale(3.2).setDepth(35);
-        this.add.text(width - 142, 90, 'ALFARERO', {
+        this.add.sprite(leftX + 48, playerRowY - 2, 'boy', 0).setScale(3).setDepth(35);
+        this.add.text(leftX + 92, playerRowY - 16, 'ALFARERO', {
             fontSize: '16px',
             color: '#a9d6ff',
             fontStyle: 'bold'
         }).setDepth(35);
-        this.patienceBarBg = this.add.rectangle(width - 250, 142, barWidth, 14, 0x0b1018, 1).setOrigin(0, 0).setDepth(32);
-        this.patienceBar = this.add.rectangle(width - 250, 142, barWidth, 14, colors.player, 1).setOrigin(0, 0).setDepth(33);
-        this.patienceText = this.add.text(width - 140, 149, '', {
+
+        this.patienceBarBg = this.add.rectangle(leftX + 92, playerRowY + 2, barWidth, 14, 0x0b1018, 1)
+            .setOrigin(0, 0)
+            .setDepth(32);
+        this.patienceBar = this.add.rectangle(leftX + 92, playerRowY + 2, barWidth, 14, colors.player, 1)
+            .setOrigin(0, 0)
+            .setDepth(33);
+        this.patienceText = this.add.text(leftX + 92 + (barWidth / 2), playerRowY + 9, '', {
             fontSize: '12px',
             color: '#ffffff',
             fontStyle: 'bold'
@@ -104,9 +120,9 @@ class CombatScene extends Phaser.Scene {
 
         this.questionBox = this.add.rectangle(
             width / 2,
-            230,
+            206,
             width - 60,
-            80,
+            64,
             colors.panel,
             0.95
         ).setDepth(40);
@@ -114,10 +130,10 @@ class CombatScene extends Phaser.Scene {
 
         this.questionText = this.add.text(
             width / 2,
-            230,
+            206,
             '',
             {
-                fontSize: '15px',
+                fontSize: '14px',
                 color: '#ecf0f1',
                 fontStyle: 'italic',
                 align: 'center',
@@ -129,24 +145,24 @@ class CombatScene extends Phaser.Scene {
     createLogPanel() {
         const { width, colors } = this.ui;
 
-        this.logBox = this.add.rectangle(width / 2, 330, width - 60, 140, colors.panel, 0.95)
+        this.logBox = this.add.rectangle(width / 2, 322, width - 60, 126, colors.panel, 0.95)
             .setStrokeStyle(2, colors.border)
             .setDepth(40);
 
-        this.add.text(44, 270, 'LOG DE COMBATE', {
+        this.add.text(44, 262, 'LOG DE COMBATE', {
             fontSize: '13px',
             color: '#d6e4f0',
             fontStyle: 'bold'
         }).setDepth(41);
 
-        this.combatLogText = this.add.text(44, 292, '', {
-            fontSize: '14px',
+        this.combatLogText = this.add.text(44, 282, '', {
+            fontSize: '13px',
             color: '#ffffff',
-            lineSpacing: 4,
+            lineSpacing: 2,
             wordWrap: { width: width - 92 }
         }).setDepth(41);
 
-        this.turnIndicator = this.add.text(width / 2, 392, '', {
+        this.turnIndicator = this.add.text(width / 2, 248, '', {
             fontSize: '15px',
             color: '#f39c12',
             fontStyle: 'bold'
@@ -209,11 +225,11 @@ class CombatScene extends Phaser.Scene {
         });
 
         const menuX = 60;
-        const menuY = 430;
+        const menuY = this.ui.menuStartY;
         const menuWidth = width - 120;
-        const optionHeight = 34;
-        const optionSpacing = 6;
-        const menuHeight = (optionHeight + optionSpacing) * allOptions.length + 18;
+        const optionHeight = 28;
+        const optionSpacing = 4;
+        const menuHeight = (optionHeight + optionSpacing) * allOptions.length + 14;
 
         this.menuBox = this.add.rectangle(
             width / 2,
@@ -227,7 +243,7 @@ class CombatScene extends Phaser.Scene {
 
         this.menuSelector = this.add.rectangle(
             width / 2,
-            menuY + 9 + optionHeight / 2,
+            menuY + 7 + optionHeight / 2,
             menuWidth - 10,
             optionHeight,
             colors.accent,
@@ -238,7 +254,7 @@ class CombatScene extends Phaser.Scene {
         this.menuOptions = [];
 
         allOptions.forEach((option, index) => {
-            const y = menuY + 9 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
+            const y = menuY + 7 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
 
             let qualityColor;
             if (option.color) {
@@ -252,7 +268,7 @@ class CombatScene extends Phaser.Scene {
             }
 
             const numberText = this.add.text(menuX + 16, y, `${index + 1}.`, {
-                fontSize: '14px',
+                fontSize: '13px',
                 color: '#95a5a6',
                 fontStyle: 'bold'
             }).setOrigin(0, 0.5).setDepth(60);
@@ -260,9 +276,9 @@ class CombatScene extends Phaser.Scene {
             const qualityIndicator = this.add.rectangle(menuX + 46, y, 10, 10, qualityColor).setDepth(60);
 
             const optionText = this.add.text(menuX + 62, y, option.text, {
-                fontSize: '13px',
+                fontSize: '12px',
                 color: '#ecf0f1',
-                wordWrap: { width: menuWidth - 160 }
+                wordWrap: { width: menuWidth - 170 }
             }).setOrigin(0, 0.5).setDepth(60);
 
             let qualityTag = null;
@@ -375,7 +391,7 @@ class CombatScene extends Phaser.Scene {
 
         const feedback = this.add.text(
             width / 2,
-            398,
+            248,
             message.split('\n')[0],
             {
                 fontSize: '13px',
@@ -485,7 +501,10 @@ class CombatScene extends Phaser.Scene {
             this.turnIndicator.setColor('#e74c3c');
         }
 
-        const recentLog = state.combatLog.slice(-4).join('\n\n');
+        const recentLog = state.combatLog
+            .slice(-3)
+            .map(line => line.replace(/\n+/g, ' ').trim())
+            .join('\n');
         this.combatLogText.setText(recentLog);
     }
 
