@@ -43,6 +43,7 @@ class Socrates {
 
         // Para estado STUNNED
         this.stunnedTimer = null;
+        this.detectTransitionTimer = null;
 
         // Sistema de cooldown (tiempo de gracia para que el jugador escape)
         this.cooldownTimer = 0;
@@ -156,9 +157,13 @@ class Socrates {
 
         if (distance > GAME_CONSTANTS.SOCRATES_DETECT_RADIUS) {
             this.setState(GAME_CONSTANTS.SOCRATES_STATES.IDLE);
-        } else {
-            // Transición a PURSUE después de un momento
-            this.scene.time.delayedCall(500, () => {
+            return;
+        }
+
+        // Transición a PURSUE después de un momento (sin crear timers por frame)
+        if (!this.detectTransitionTimer) {
+            this.detectTransitionTimer = this.scene.time.delayedCall(500, () => {
+                this.detectTransitionTimer = null;
                 if (this.state === GAME_CONSTANTS.SOCRATES_STATES.DETECT && !this.isOnCooldown) {
                     this.setState(GAME_CONSTANTS.SOCRATES_STATES.PURSUE);
                 }
@@ -252,6 +257,14 @@ class Socrates {
 
     setState(newState) {
         const oldState = this.state;
+
+        if (oldState === GAME_CONSTANTS.SOCRATES_STATES.DETECT && newState !== GAME_CONSTANTS.SOCRATES_STATES.DETECT) {
+            if (this.detectTransitionTimer) {
+                this.detectTransitionTimer.remove();
+                this.detectTransitionTimer = null;
+            }
+        }
+
         this.state = newState;
 
         this.updateStateVisual();

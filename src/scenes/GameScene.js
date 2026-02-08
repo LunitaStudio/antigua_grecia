@@ -84,6 +84,9 @@ class GameScene extends Phaser.Scene {
             this.handleSocratesEngagement();
         });
 
+        this.isInteracting = false;
+        this.isSocratesEncounterActive = false;
+
         // Trackear estadísticas
         this.stats = {
             tripsCompleted: 0,
@@ -406,6 +409,11 @@ class GameScene extends Phaser.Scene {
     }
 
     handleSocratesEngagement() {
+        if (this.isSocratesEncounterActive || this.dialogSystem.isActive) {
+            return;
+        }
+
+        this.isSocratesEncounterActive = true;
         this.stats.encountersWithSocrates++;
 
         if (DEBUG_MODE.logStates) {
@@ -448,6 +456,7 @@ class GameScene extends Phaser.Scene {
 
         // Regenerar paciencia por zafar
         this.player.restorePatience(5);
+        this.isSocratesEncounterActive = false;
     }
 
     onLayer1Fail(question) {
@@ -479,6 +488,7 @@ class GameScene extends Phaser.Scene {
 
     onCombatLayer2End(outcome) {
         this.scene.resume();
+        this.isSocratesEncounterActive = false;
 
         if (outcome === 'victory') {
             // Victoria en combate: Sócrates se retira

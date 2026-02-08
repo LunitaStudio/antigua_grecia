@@ -6,154 +6,158 @@ class CombatScene extends Phaser.Scene {
     init(data) {
         this.player = data.player;
         this.question = data.question;
-        this.onCombatEnd = data.onCombatEnd; // Callback para volver a GameScene
+        this.onCombatEnd = data.onCombatEnd;
+        this.stats = data.stats;
 
         this.combatSystem = new CombatSystem(this);
         this.combatSystem.init(this.player, this.question);
-
-        // Referencia a stats de GameScene
-        this.stats = data.stats;
     }
 
     create() {
         const { width, height } = this.cameras.main;
 
-        // Fondo oscuro
-        this.add.rectangle(width / 2, height / 2, width, height, 0x1a1a2e, 1).setDepth(0);
+        this.ui = {
+            width,
+            height,
+            colors: {
+                bg: 0x0f1724,
+                panel: 0x1f2c3f,
+                border: 0x4d6480,
+                player: 0x3498db,
+                enemy: 0xe74c3c,
+                accent: 0xf39c12
+            },
+            barWidth: 220
+        };
 
-        // Título
-        this.add.text(width / 2, 30, '⚔️ COMBATE FILOSÓFICO ⚔️', {
-            fontSize: '28px',
-            color: '#f39c12',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(100);
+        this.createBackground();
+        this.createTopCards();
+        this.createQuestionPanel();
+        this.createLogPanel();
 
-        // === SÓCRATES (ARRIBA) ===
-        this.socratesSprite = this.add.rectangle(
-            width / 2,
-            130,
-            70,
-            70,
-            0xe74c3c
-        ).setDepth(50);
-
-        this.socratesLabel = this.add.text(width / 2, 210, 'SÓCRATES', {
-            fontSize: '16px',
-            color: '#e74c3c',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(100);
-
-        // Barra de Intensidad de Sócrates
-        const intensityBarBg = this.add.rectangle(
-            width / 2,
-            235,
-            200,
-            16,
-            0x2c3e50
-        ).setDepth(80);
-
-        this.intensityBar = this.add.rectangle(
-            width / 2,
-            235,
-            200,
-            16,
-            0xe74c3c
-        ).setDepth(81);
-
-        this.intensityText = this.add.text(width / 2, 235, '', {
-            fontSize: '12px',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(82);
-
-        // === JUGADOR (ABAJO) ===
-        this.playerSprite = this.add.rectangle(
-            width / 2,
-            height - 130,
-            70,
-            70,
-            0x3498db
-        ).setDepth(50);
-
-        this.playerLabel = this.add.text(width / 2, height - 50, 'ALFARERO', {
-            fontSize: '16px',
-            color: '#3498db',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(100);
-
-        // Barra de Paciencia
-        const patienceBarBg = this.add.rectangle(
-            width / 2,
-            height - 75,
-            200,
-            16,
-            0x2c3e50
-        ).setDepth(80);
-
-        this.patienceBar = this.add.rectangle(
-            width / 2,
-            height - 75,
-            200,
-            16,
-            0x27ae60
-        ).setDepth(81);
-
-        this.patienceText = this.add.text(width / 2, height - 75, '', {
-            fontSize: '12px',
-            color: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(82);
-
-        // === ZONA CENTRAL: PREGUNTA ===
-        // Pregunta de Sócrates (Layer 2)
-        this.questionBox = this.add.rectangle(
-            width / 2,
-            260,
-            width - 80,
-            70,
-            0x34495e,
-            0.95
-        ).setDepth(50);
-        this.questionBox.setStrokeStyle(2, 0xf39c12);
-
-        this.questionText = this.add.text(
-            width / 2,
-            260,
-            '',
-            {
-                fontSize: '14px',
-                color: '#ecf0f1',
-                fontStyle: 'italic',
-                align: 'center',
-                wordWrap: { width: width - 100 }
-            }
-        ).setOrigin(0.5).setDepth(51);
-
-        // Indicador de turno
-        this.turnIndicator = this.add.text(width / 2, height - 105, '', {
-            fontSize: '14px',
-            color: '#f39c12',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(100);
-
-        // Crear menú vertical estilo RPG
         this.selectedIndex = 0;
+        this.menuOptions = [];
+        this.menuEnabled = true;
         this.createVerticalMenu();
 
-        // Configurar input de teclado
         this.setupKeyboardInput();
-
-        // Actualizar UI inicial
         this.updateUI();
     }
 
+    createBackground() {
+        const { width, height, colors } = this.ui;
+
+        this.add.rectangle(width / 2, height / 2, width, height, colors.bg, 0.98).setDepth(0);
+        this.add.rectangle(width / 2, 40, width - 28, 56, colors.panel, 0.95)
+            .setStrokeStyle(2, colors.border)
+            .setDepth(10);
+
+        this.add.text(width / 2, 40, 'COMBATE FILOSOFICO', {
+            fontSize: '30px',
+            color: '#f4d03f',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(20);
+    }
+
+    createTopCards() {
+        const { width, colors, barWidth } = this.ui;
+
+        // Socrates card
+        this.add.rectangle(140, 130, 250, 135, colors.panel, 0.92)
+            .setStrokeStyle(2, colors.border)
+            .setDepth(30);
+        this.add.sprite(80, 108, 'oldman', 0).setScale(3.2).setDepth(35);
+        this.add.text(138, 90, 'SOCRATES', {
+            fontSize: '16px',
+            color: '#ffc5bf',
+            fontStyle: 'bold'
+        }).setDepth(35);
+        this.intensityBarBg = this.add.rectangle(30, 142, barWidth, 14, 0x0b1018, 1).setOrigin(0, 0).setDepth(32);
+        this.intensityBar = this.add.rectangle(30, 142, barWidth, 14, colors.enemy, 1).setOrigin(0, 0).setDepth(33);
+        this.intensityText = this.add.text(140, 149, '', {
+            fontSize: '12px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(35);
+
+        // Player card
+        this.add.rectangle(width - 140, 130, 250, 135, colors.panel, 0.92)
+            .setStrokeStyle(2, colors.border)
+            .setDepth(30);
+        this.add.sprite(width - 200, 108, 'boy', 0).setScale(3.2).setDepth(35);
+        this.add.text(width - 142, 90, 'ALFARERO', {
+            fontSize: '16px',
+            color: '#a9d6ff',
+            fontStyle: 'bold'
+        }).setDepth(35);
+        this.patienceBarBg = this.add.rectangle(width - 250, 142, barWidth, 14, 0x0b1018, 1).setOrigin(0, 0).setDepth(32);
+        this.patienceBar = this.add.rectangle(width - 250, 142, barWidth, 14, colors.player, 1).setOrigin(0, 0).setDepth(33);
+        this.patienceText = this.add.text(width - 140, 149, '', {
+            fontSize: '12px',
+            color: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(35);
+    }
+
+    createQuestionPanel() {
+        const { width, colors } = this.ui;
+
+        this.questionBox = this.add.rectangle(
+            width / 2,
+            230,
+            width - 60,
+            80,
+            colors.panel,
+            0.95
+        ).setDepth(40);
+        this.questionBox.setStrokeStyle(2, colors.accent);
+
+        this.questionText = this.add.text(
+            width / 2,
+            230,
+            '',
+            {
+                fontSize: '15px',
+                color: '#ecf0f1',
+                fontStyle: 'italic',
+                align: 'center',
+                wordWrap: { width: width - 110 }
+            }
+        ).setOrigin(0.5).setDepth(41);
+    }
+
+    createLogPanel() {
+        const { width, colors } = this.ui;
+
+        this.logBox = this.add.rectangle(width / 2, 330, width - 60, 140, colors.panel, 0.95)
+            .setStrokeStyle(2, colors.border)
+            .setDepth(40);
+
+        this.add.text(44, 270, 'LOG DE COMBATE', {
+            fontSize: '13px',
+            color: '#d6e4f0',
+            fontStyle: 'bold'
+        }).setDepth(41);
+
+        this.combatLogText = this.add.text(44, 292, '', {
+            fontSize: '14px',
+            color: '#ffffff',
+            lineSpacing: 4,
+            wordWrap: { width: width - 92 }
+        }).setDepth(41);
+
+        this.turnIndicator = this.add.text(width / 2, 392, '', {
+            fontSize: '15px',
+            color: '#f39c12',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(45);
+    }
+
     setupKeyboardInput() {
-        // Teclas de navegación
         this.cursors = this.input.keyboard.createCursorKeys();
         this.enterKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
         this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // Teclas numéricas para quick-select
         this.numberKeys = {
             one: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.ONE),
             two: this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.TWO),
@@ -166,7 +170,6 @@ class CombatScene extends Phaser.Scene {
         const state = this.combatSystem.getState();
         if (!state.isPlayerTurn) return;
 
-        // Navegación con flechas
         if (Phaser.Input.Keyboard.JustDown(this.cursors.up)) {
             this.moveSelection(-1);
         }
@@ -174,113 +177,69 @@ class CombatScene extends Phaser.Scene {
             this.moveSelection(1);
         }
 
-        // Confirmar selección con Enter o Espacio
-        if (Phaser.Input.Keyboard.JustDown(this.enterKey) ||
-            Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        if (Phaser.Input.Keyboard.JustDown(this.enterKey) || Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
             this.confirmSelection();
         }
 
-        // Quick-select con números
-        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.one)) {
-            this.selectOption(0);
-        }
-        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.two)) {
-            this.selectOption(1);
-        }
-        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.three)) {
-            this.selectOption(2);
-        }
-        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.four)) {
-            this.selectOption(3);
-        }
-    }
-
-    showCombatFeedback(message, color) {
-        const { width, height } = this.cameras.main;
-
-        const feedback = this.add.text(
-            width / 2,
-            height / 2 + 80,
-            message,
-            {
-                fontSize: '16px',
-                color: '#ffffff',
-                backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
-                padding: { x: 10, y: 5 }
-            }
-        );
-        feedback.setOrigin(0.5);
-        feedback.setDepth(150);
-
-        this.tweens.add({
-            targets: feedback,
-            alpha: 0,
-            duration: 1500,
-            onComplete: () => feedback.destroy()
-        });
+        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.one)) this.selectOption(0);
+        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.two)) this.selectOption(1);
+        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.three)) this.selectOption(2);
+        if (Phaser.Input.Keyboard.JustDown(this.numberKeys.four)) this.selectOption(3);
     }
 
     createVerticalMenu() {
-        const { width, height } = this.cameras.main;
-
-        // Leer del state actualizado, NO de this.question (para evitar desincronización)
+        const { width, colors } = this.ui;
         const state = this.combatSystem.getState();
+
         const layer2Options = state.question.layer2.options;
         const allOptions = [...layer2Options];
 
-        // Agregar opción de Ánfora si el jugador tiene
         if (this.player.amphoras > 0) {
             allOptions.push({
-                text: `🏺 Tirar Ánfora (${this.player.amphoras})`,
+                text: `Tirar Anfora (${this.player.amphoras})`,
                 action: 'amphora',
                 color: 0xe67e22
             });
         }
 
-        // Agregar opción de Huir
         allOptions.push({
-            text: '🏃 Huir',
+            text: 'Huir',
             action: 'flee',
             color: 0x95a5a6
         });
 
-        // Configuración del menú
         const menuX = 60;
-        const menuY = 310;
+        const menuY = 430;
         const menuWidth = width - 120;
-        const optionHeight = 28;
-        const optionSpacing = 4;
-        const menuHeight = (optionHeight + optionSpacing) * allOptions.length + 20;
+        const optionHeight = 34;
+        const optionSpacing = 6;
+        const menuHeight = (optionHeight + optionSpacing) * allOptions.length + 18;
 
-        // Fondo del menú
         this.menuBox = this.add.rectangle(
             width / 2,
             menuY + menuHeight / 2,
             menuWidth,
             menuHeight,
-            0x2c3e50,
-            0.95
-        ).setDepth(60);
-        this.menuBox.setStrokeStyle(2, 0x34495e);
+            colors.panel,
+            0.96
+        ).setDepth(50);
+        this.menuBox.setStrokeStyle(2, colors.border);
 
-        // Selector visual
         this.menuSelector = this.add.rectangle(
             width / 2,
-            menuY + 15 + optionHeight / 2,
+            menuY + 9 + optionHeight / 2,
             menuWidth - 10,
             optionHeight,
-            0xf39c12,
-            0.4
-        ).setDepth(70);
-        this.menuSelector.setStrokeStyle(2, 0xf39c12);
+            colors.accent,
+            0.32
+        ).setDepth(55);
+        this.menuSelector.setStrokeStyle(2, colors.accent);
 
-        // Crear opciones del menú
         this.menuOptions = [];
 
         allOptions.forEach((option, index) => {
-            const y = menuY + 15 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
+            const y = menuY + 9 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
 
-            // Color del indicador de calidad
             let qualityColor;
             if (option.color) {
                 qualityColor = option.color;
@@ -292,66 +251,35 @@ class CombatScene extends Phaser.Scene {
                 qualityColor = 0x3498db;
             }
 
-            // Numeración de la opción
-            const numberText = this.add.text(
-                menuX + 15,
-                y,
-                `${index + 1}.`,
-                {
-                    fontSize: '14px',
-                    color: '#95a5a6',
-                    fontStyle: 'bold'
-                }
-            ).setOrigin(0, 0.5).setDepth(75);
+            const numberText = this.add.text(menuX + 16, y, `${index + 1}.`, {
+                fontSize: '14px',
+                color: '#95a5a6',
+                fontStyle: 'bold'
+            }).setOrigin(0, 0.5).setDepth(60);
 
-            // Indicador de calidad (cuadrado de color)
-            const qualityIndicator = this.add.rectangle(
-                menuX + 45,
-                y,
-                8,
-                8,
-                qualityColor
-            ).setDepth(75);
+            const qualityIndicator = this.add.rectangle(menuX + 46, y, 10, 10, qualityColor).setDepth(60);
 
-            // Texto de la opción
-            const optionText = this.add.text(
-                menuX + 60,
-                y,
-                option.text,
-                {
-                    fontSize: '13px',
-                    color: '#ecf0f1',
-                    wordWrap: { width: menuWidth - 80 }
-                }
-            ).setOrigin(0, 0.5).setDepth(75);
+            const optionText = this.add.text(menuX + 62, y, option.text, {
+                fontSize: '13px',
+                color: '#ecf0f1',
+                wordWrap: { width: menuWidth - 160 }
+            }).setOrigin(0, 0.5).setDepth(60);
 
-            // Tag de calidad (opcional, para las respuestas filosóficas)
             let qualityTag = null;
             if (option.quality === 'good') {
-                qualityTag = this.add.text(
-                    menuX + menuWidth - 80,
-                    y,
-                    '[BUENO]',
-                    {
-                        fontSize: '10px',
-                        color: '#27ae60',
-                        fontStyle: 'bold'
-                    }
-                ).setOrigin(1, 0.5).setDepth(75);
+                qualityTag = this.add.text(menuX + menuWidth - 20, y, '[BUENO]', {
+                    fontSize: '10px',
+                    color: '#27ae60',
+                    fontStyle: 'bold'
+                }).setOrigin(1, 0.5).setDepth(60);
             } else if (option.quality === 'regular') {
-                qualityTag = this.add.text(
-                    menuX + menuWidth - 80,
-                    y,
-                    '[REGULAR]',
-                    {
-                        fontSize: '10px',
-                        color: '#f39c12',
-                        fontStyle: 'bold'
-                    }
-                ).setOrigin(1, 0.5).setDepth(75);
+                qualityTag = this.add.text(menuX + menuWidth - 20, y, '[REGULAR]', {
+                    fontSize: '10px',
+                    color: '#f39c12',
+                    fontStyle: 'bold'
+                }).setOrigin(1, 0.5).setDepth(60);
             }
 
-            // Zona interactiva (invisible, cubre toda la opción)
             const hitArea = this.add.rectangle(
                 width / 2,
                 y,
@@ -359,16 +287,18 @@ class CombatScene extends Phaser.Scene {
                 optionHeight,
                 0xffffff,
                 0
-            ).setDepth(72);
+            ).setDepth(58);
             hitArea.setInteractive({ useHandCursor: true });
 
-            // Eventos de mouse
             hitArea.on('pointerover', () => {
+                if (!this.menuEnabled) return;
                 this.selectedIndex = index;
                 this.updateSelector();
             });
 
             hitArea.on('pointerdown', () => {
+                if (!this.menuEnabled) return;
+                this.selectedIndex = index;
                 this.confirmSelection();
             });
 
@@ -383,23 +313,36 @@ class CombatScene extends Phaser.Scene {
             });
         });
 
-        // Actualizar selector inicial
         this.updateSelector();
     }
 
+    recreateMenu(enabled = true) {
+        if (this.menuBox) this.menuBox.destroy();
+        if (this.menuSelector) this.menuSelector.destroy();
+
+        this.menuOptions.forEach(opt => {
+            if (opt.numberText) opt.numberText.destroy();
+            if (opt.qualityIndicator) opt.qualityIndicator.destroy();
+            if (opt.optionText) opt.optionText.destroy();
+            if (opt.qualityTag) opt.qualityTag.destroy();
+            if (opt.hitArea) opt.hitArea.destroy();
+        });
+        this.menuOptions = [];
+
+        this.selectedIndex = 0;
+        this.createVerticalMenu();
+        this.setMenuEnabled(enabled);
+    }
+
     updateSelector() {
-        // Mover el selector a la opción actual
         if (this.menuOptions[this.selectedIndex]) {
-            const targetY = this.menuOptions[this.selectedIndex].y;
-            this.menuSelector.y = targetY;
+            this.menuSelector.y = this.menuOptions[this.selectedIndex].y;
         }
     }
 
     moveSelection(direction) {
-        // Navegar arriba/abajo en el menú
         this.selectedIndex += direction;
 
-        // Wrap around
         if (this.selectedIndex < 0) {
             this.selectedIndex = this.menuOptions.length - 1;
         } else if (this.selectedIndex >= this.menuOptions.length) {
@@ -410,7 +353,6 @@ class CombatScene extends Phaser.Scene {
     }
 
     selectOption(index) {
-        // Selección directa con teclas numéricas
         if (index >= 0 && index < this.menuOptions.length) {
             this.selectedIndex = index;
             this.updateSelector();
@@ -422,68 +364,83 @@ class CombatScene extends Phaser.Scene {
         const state = this.combatSystem.getState();
         if (!state.isPlayerTurn) return;
 
-        const selectedOption = this.menuOptions[this.selectedIndex].option;
-        this.handlePlayerAction(selectedOption);
+        const selected = this.menuOptions[this.selectedIndex];
+        if (!selected) return;
+
+        this.handlePlayerAction(selected.option);
+    }
+
+    showCombatFeedback(message, color) {
+        const { width } = this.cameras.main;
+
+        const feedback = this.add.text(
+            width / 2,
+            398,
+            message.split('\n')[0],
+            {
+                fontSize: '13px',
+                color: '#ffffff',
+                backgroundColor: Phaser.Display.Color.IntegerToColor(color).rgba,
+                padding: { x: 8, y: 4 }
+            }
+        );
+        feedback.setOrigin(0.5);
+        feedback.setDepth(70);
+
+        this.tweens.add({
+            targets: feedback,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => feedback.destroy()
+        });
     }
 
     handlePlayerAction(option) {
         const state = this.combatSystem.getState();
         if (!state.isPlayerTurn) return;
 
-        // Deshabilitar menú temporalmente
         this.setMenuEnabled(false);
 
-        // Ejecutar acción del jugador
         const result = this.combatSystem.executePlayerAction(option);
         this.combatSystem.combatLog.push(result.message);
 
-        // Mostrar feedback visual temporal
-        const feedbackColor = result.outcome === 'win' ? 0x27ae60 :
-                             result.outcome === 'lose' ? 0xe74c3c :
-                             option.action === 'amphora' ? 0xe67e22 : 0x3498db;
-        this.showCombatFeedback(result.message, feedbackColor);
+        const feedbackColor = result.outcome === 'victory'
+            ? 0x27ae60
+            : result.outcome === 'defeat'
+                ? 0xe74c3c
+                : option.action === 'amphora'
+                    ? 0xe67e22
+                    : 0x3498db;
 
-        // Actualizar UI
+        this.showCombatFeedback(result.message, feedbackColor);
         this.updateUI();
 
-        // Si el combate terminó
         if (result.combatEnded) {
-            this.time.delayedCall(2000, () => {
-                this.endCombat(result.outcome);
-            });
+            this.time.delayedCall(1800, () => this.endCombat(result.outcome));
             return;
         }
 
-        // Recrear menú solo si usó ánfora (para actualizar contador)
         if (option.action === 'amphora') {
-            this.recreateMenu();
+            this.recreateMenu(false);
         }
 
-        // Cambiar turno a Sócrates
         this.combatSystem.isPlayerTurn = false;
         this.updateUI();
 
-        // Turno del enemigo
-        this.time.delayedCall(1500, () => {
+        this.time.delayedCall(1300, () => {
             const enemyResult = this.combatSystem.executeSocratesAction();
             this.combatSystem.combatLog.push(enemyResult.message);
 
-            // Mostrar feedback del ataque de Sócrates
             this.showCombatFeedback(enemyResult.message, 0xe74c3c);
-
             this.updateUI();
 
-            // Si Sócrates hizo una nueva pregunta, recrear menú
             if (enemyResult.questionChanged) {
-                this.recreateMenu();
+                this.recreateMenu(false);
             }
 
             if (enemyResult.combatEnded) {
-                this.time.delayedCall(2000, () => {
-                    this.endCombat(enemyResult.outcome);
-                });
+                this.time.delayedCall(1800, () => this.endCombat(enemyResult.outcome));
             } else {
-                // Volver turno al jugador
                 this.combatSystem.isPlayerTurn = true;
                 this.updateUI();
                 this.setMenuEnabled(true);
@@ -491,69 +448,50 @@ class CombatScene extends Phaser.Scene {
         });
     }
 
-    recreateMenu() {
-        // Destruir menú actual
-        if (this.menuBox) this.menuBox.destroy();
-        if (this.menuSelector) this.menuSelector.destroy();
-        this.menuOptions.forEach(opt => {
-            if (opt.numberText) opt.numberText.destroy();
-            if (opt.qualityIndicator) opt.qualityIndicator.destroy();
-            if (opt.optionText) opt.optionText.destroy();
-            if (opt.qualityTag) opt.qualityTag.destroy();
-            if (opt.hitArea) opt.hitArea.destroy();
-        });
-        this.menuOptions = [];
-
-        // Recrear menú
-        this.selectedIndex = 0;
-        this.createVerticalMenu();
-    }
-
     updateUI() {
         const state = this.combatSystem.getState();
 
-        // Pregunta de Sócrates
         this.questionText.setText(state.question.layer2.question);
 
-        // Barra de Intensidad de Sócrates
-        const intensityPercent = Math.max(0, state.socrates.intensity / state.socrates.maxIntensity);
-        this.intensityBar.setScale(intensityPercent, 1);
+        const intensityPercent = Phaser.Math.Clamp(state.socrates.intensity / state.socrates.maxIntensity, 0, 1);
+        this.intensityBar.width = this.ui.barWidth * intensityPercent;
         this.intensityText.setText(`${Math.max(0, state.socrates.intensity)}/${state.socrates.maxIntensity}`);
 
-        // Cambiar color según intensidad
         if (intensityPercent > 0.5) {
-            this.intensityBar.setFillStyle(0xe74c3c); // Rojo
+            this.intensityBar.setFillStyle(0xe74c3c);
         } else if (intensityPercent > 0.25) {
-            this.intensityBar.setFillStyle(0xf39c12); // Naranja
+            this.intensityBar.setFillStyle(0xf39c12);
         } else {
-            this.intensityBar.setFillStyle(0x95a5a6); // Gris (casi derrotado)
+            this.intensityBar.setFillStyle(0x95a5a6);
         }
 
-        // Barra de Paciencia del Jugador
-        const patiencePercent = Math.max(0, state.player.patience / state.player.maxPatience);
-        this.patienceBar.setScale(patiencePercent, 1);
+        const patiencePercent = Phaser.Math.Clamp(state.player.patience / state.player.maxPatience, 0, 1);
+        this.patienceBar.width = this.ui.barWidth * patiencePercent;
         this.patienceText.setText(`${Math.max(0, state.player.patience)}/${state.player.maxPatience}`);
 
-        // Cambiar color según paciencia
         if (patiencePercent > 0.6) {
-            this.patienceBar.setFillStyle(0x27ae60); // Verde
+            this.patienceBar.setFillStyle(0x27ae60);
         } else if (patiencePercent > 0.3) {
-            this.patienceBar.setFillStyle(0xf39c12); // Naranja
+            this.patienceBar.setFillStyle(0xf39c12);
         } else {
-            this.patienceBar.setFillStyle(0xe74c3c); // Rojo (peligro)
+            this.patienceBar.setFillStyle(0xe74c3c);
         }
 
-        // Turno
         if (state.isPlayerTurn) {
-            this.turnIndicator.setText('▲ Tu turno');
+            this.turnIndicator.setText('Tu turno');
             this.turnIndicator.setColor('#3498db');
         } else {
-            this.turnIndicator.setText('▼ Turno de Sócrates...');
+            this.turnIndicator.setText('Turno de Socrates...');
             this.turnIndicator.setColor('#e74c3c');
         }
+
+        const recentLog = state.combatLog.slice(-4).join('\n\n');
+        this.combatLogText.setText(recentLog);
     }
 
     setMenuEnabled(enabled) {
+        this.menuEnabled = enabled;
+
         this.menuOptions.forEach(opt => {
             if (enabled) {
                 opt.hitArea.setInteractive({ useHandCursor: true });
@@ -562,11 +500,8 @@ class CombatScene extends Phaser.Scene {
             }
         });
 
-        // Cambiar opacidad del menú para indicar estado
-        if (enabled) {
-            this.menuSelector.setAlpha(1);
-        } else {
-            this.menuSelector.setAlpha(0.3);
+        if (this.menuSelector) {
+            this.menuSelector.setAlpha(enabled ? 1 : 0.3);
         }
     }
 
@@ -577,22 +512,20 @@ class CombatScene extends Phaser.Scene {
         let resultColor = '';
 
         if (outcome === 'victory') {
-            resultText = '¡VICTORIA!\n\nSócrates se retira a reflexionar...';
+            resultText = 'VICTORIA\n\nSocrates se retira a reflexionar...';
             resultColor = '#27ae60';
         } else if (outcome === 'fled') {
-            resultText = '¡ESCAPASTE!\n\nSócrates se queda filosofando solo.';
+            resultText = 'ESCAPASTE\n\nSocrates se queda filosofando solo.';
             resultColor = '#f39c12';
-        } else if (outcome === 'defeat') {
+        } else {
             resultText = 'DERROTA\n\nPerdiste toda tu paciencia...';
             resultColor = '#e74c3c';
         }
 
-        // Overlay oscuro
-        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
-        overlay.setDepth(200);
+        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(200);
 
         const result = this.add.text(width / 2, height / 2 - 30, resultText, {
-            fontSize: '32px',
+            fontSize: '30px',
             color: resultColor,
             fontStyle: 'bold',
             align: 'center'
@@ -602,11 +535,10 @@ class CombatScene extends Phaser.Scene {
         this.tweens.add({
             targets: result,
             alpha: 1,
-            duration: 1000
+            duration: 800
         });
 
-        // Continuar texto
-        const continueText = this.add.text(
+        this.add.text(
             width / 2,
             height / 2 + 60,
             'Click para continuar',
