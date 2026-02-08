@@ -33,7 +33,6 @@ class CombatScene extends Phaser.Scene {
 
         this.createBackground();
         this.createTopCards();
-        this.createQuestionPanel();
         this.createLogPanel();
 
         this.selectedIndex = 0;
@@ -115,58 +114,31 @@ class CombatScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(35);
     }
 
-    createQuestionPanel() {
-        const { width, colors } = this.ui;
-
-        this.questionBox = this.add.rectangle(
-            width / 2,
-            206,
-            width - 60,
-            64,
-            colors.panel,
-            0.95
-        ).setDepth(40);
-        this.questionBox.setStrokeStyle(2, colors.accent);
-
-        this.questionText = this.add.text(
-            width / 2,
-            206,
-            '',
-            {
-                fontSize: '14px',
-                color: '#ecf0f1',
-                fontStyle: 'italic',
-                align: 'center',
-                wordWrap: { width: width - 110 }
-            }
-        ).setOrigin(0.5).setDepth(41);
-    }
-
     createLogPanel() {
         const { width, colors } = this.ui;
 
-        this.logBox = this.add.rectangle(width / 2, 322, width - 60, 126, colors.panel, 0.95)
+        this.logBox = this.add.rectangle(width / 2, 292, width - 60, 188, colors.panel, 0.95)
             .setStrokeStyle(2, colors.border)
             .setDepth(40);
 
-        this.add.text(44, 262, 'LOG DE COMBATE', {
+        this.turnIndicator = this.add.text(width / 2, 176, '', {
+            fontSize: '15px',
+            color: '#f39c12',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(45);
+
+        this.add.text(44, 208, 'LOG DE COMBATE', {
             fontSize: '13px',
             color: '#d6e4f0',
             fontStyle: 'bold'
         }).setDepth(41);
 
-        this.combatLogText = this.add.text(44, 282, '', {
+        this.combatLogText = this.add.text(44, 230, '', {
             fontSize: '13px',
             color: '#ffffff',
             lineSpacing: 2,
             wordWrap: { width: width - 92 }
         }).setDepth(41);
-
-        this.turnIndicator = this.add.text(width / 2, 248, '', {
-            fontSize: '15px',
-            color: '#f39c12',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(45);
     }
 
     setupKeyboardInput() {
@@ -203,26 +175,28 @@ class CombatScene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.numberKeys.four)) this.selectOption(3);
     }
 
-    createVerticalMenu() {
-        const { width, colors } = this.ui;
-        const state = this.combatSystem.getState();
+    buildActions(state) {
+        const actions = [
+            { text: 'REBATIR', action: 'rebatir', color: 0x3498db },
+            { text: 'DIVAGAR', action: 'divagar', color: 0x95a5a6 }
+        ];
 
-        const layer2Options = state.question.layer2.options;
-        const allOptions = [...layer2Options];
-
-        if (this.player.amphoras > 0) {
-            allOptions.push({
-                text: `Tirar Anfora (${this.player.amphoras})`,
+        if (state.player.amphoras > 0) {
+            actions.push({
+                text: `ARROJAR ANFORA (${state.player.amphoras})`,
                 action: 'amphora',
                 color: 0xe67e22
             });
         }
 
-        allOptions.push({
-            text: 'Huir',
-            action: 'flee',
-            color: 0x95a5a6
-        });
+        actions.push({ text: 'HUIR', action: 'flee', color: 0x27ae60 });
+        return actions;
+    }
+
+    createVerticalMenu() {
+        const { width, colors } = this.ui;
+        const state = this.combatSystem.getState();
+        const allOptions = this.buildActions(state);
 
         const menuX = 60;
         const menuY = this.ui.menuStartY;
@@ -256,45 +230,19 @@ class CombatScene extends Phaser.Scene {
         allOptions.forEach((option, index) => {
             const y = menuY + 7 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
 
-            let qualityColor;
-            if (option.color) {
-                qualityColor = option.color;
-            } else if (option.quality === 'good') {
-                qualityColor = 0x27ae60;
-            } else if (option.quality === 'regular') {
-                qualityColor = 0xf39c12;
-            } else {
-                qualityColor = 0x3498db;
-            }
-
             const numberText = this.add.text(menuX + 16, y, `${index + 1}.`, {
                 fontSize: '13px',
                 color: '#95a5a6',
                 fontStyle: 'bold'
             }).setOrigin(0, 0.5).setDepth(60);
 
-            const qualityIndicator = this.add.rectangle(menuX + 46, y, 10, 10, qualityColor).setDepth(60);
+            const qualityIndicator = this.add.rectangle(menuX + 46, y, 10, 10, option.color).setDepth(60);
 
             const optionText = this.add.text(menuX + 62, y, option.text, {
                 fontSize: '12px',
                 color: '#ecf0f1',
                 wordWrap: { width: menuWidth - 170 }
             }).setOrigin(0, 0.5).setDepth(60);
-
-            let qualityTag = null;
-            if (option.quality === 'good') {
-                qualityTag = this.add.text(menuX + menuWidth - 20, y, '[BUENO]', {
-                    fontSize: '10px',
-                    color: '#27ae60',
-                    fontStyle: 'bold'
-                }).setOrigin(1, 0.5).setDepth(60);
-            } else if (option.quality === 'regular') {
-                qualityTag = this.add.text(menuX + menuWidth - 20, y, '[REGULAR]', {
-                    fontSize: '10px',
-                    color: '#f39c12',
-                    fontStyle: 'bold'
-                }).setOrigin(1, 0.5).setDepth(60);
-            }
 
             const hitArea = this.add.rectangle(
                 width / 2,
@@ -323,7 +271,6 @@ class CombatScene extends Phaser.Scene {
                 numberText,
                 qualityIndicator,
                 optionText,
-                qualityTag,
                 hitArea,
                 y
             });
@@ -340,7 +287,6 @@ class CombatScene extends Phaser.Scene {
             if (opt.numberText) opt.numberText.destroy();
             if (opt.qualityIndicator) opt.qualityIndicator.destroy();
             if (opt.optionText) opt.optionText.destroy();
-            if (opt.qualityTag) opt.qualityTag.destroy();
             if (opt.hitArea) opt.hitArea.destroy();
         });
         this.menuOptions = [];
@@ -386,12 +332,20 @@ class CombatScene extends Phaser.Scene {
         this.handlePlayerAction(selected.option);
     }
 
+    playPlayerActionCue(action) {
+        // Hook para futuro: pseudo-animaciones por accion.
+    }
+
+    playSocratesActionCue() {
+        // Hook para futuro: pseudo-animaciones de ataque de Socrates.
+    }
+
     showCombatFeedback(message, color) {
         const { width } = this.cameras.main;
 
         const feedback = this.add.text(
             width / 2,
-            248,
+            196,
             message.split('\n')[0],
             {
                 fontSize: '13px',
@@ -418,7 +372,14 @@ class CombatScene extends Phaser.Scene {
         this.setMenuEnabled(false);
 
         const result = this.combatSystem.executePlayerAction(option);
+        if (result.invalidAction) {
+            this.showCombatFeedback(result.message, 0xe74c3c);
+            this.setMenuEnabled(true);
+            return;
+        }
+
         this.combatSystem.combatLog.push(result.message);
+        this.playPlayerActionCue(option.action);
 
         const feedbackColor = result.outcome === 'victory'
             ? 0x27ae60
@@ -431,13 +392,21 @@ class CombatScene extends Phaser.Scene {
         this.showCombatFeedback(result.message, feedbackColor);
         this.updateUI();
 
+        const usedAmphora = option.action === 'amphora';
+        if (usedAmphora) {
+            this.recreateMenu(false);
+        }
+
         if (result.combatEnded) {
             this.time.delayedCall(1800, () => this.endCombat(result.outcome));
             return;
         }
 
-        if (option.action === 'amphora') {
-            this.recreateMenu(false);
+        if (result.skipEnemyTurn) {
+            this.combatSystem.isPlayerTurn = true;
+            this.updateUI();
+            this.setMenuEnabled(true);
+            return;
         }
 
         this.combatSystem.isPlayerTurn = false;
@@ -446,13 +415,10 @@ class CombatScene extends Phaser.Scene {
         this.time.delayedCall(1300, () => {
             const enemyResult = this.combatSystem.executeSocratesAction();
             this.combatSystem.combatLog.push(enemyResult.message);
+            this.playSocratesActionCue();
 
             this.showCombatFeedback(enemyResult.message, 0xe74c3c);
             this.updateUI();
-
-            if (enemyResult.questionChanged) {
-                this.recreateMenu(false);
-            }
 
             if (enemyResult.combatEnded) {
                 this.time.delayedCall(1800, () => this.endCombat(enemyResult.outcome));
@@ -466,8 +432,6 @@ class CombatScene extends Phaser.Scene {
 
     updateUI() {
         const state = this.combatSystem.getState();
-
-        this.questionText.setText(state.question.layer2.question);
 
         const intensityPercent = Phaser.Math.Clamp(state.socrates.intensity / state.socrates.maxIntensity, 0, 1);
         this.intensityBar.width = this.ui.barWidth * intensityPercent;
@@ -502,7 +466,7 @@ class CombatScene extends Phaser.Scene {
         }
 
         const recentLog = state.combatLog
-            .slice(-3)
+            .slice(-4)
             .map(line => line.replace(/\n+/g, ' ').trim())
             .join('\n');
         this.combatLogText.setText(recentLog);
@@ -541,7 +505,7 @@ class CombatScene extends Phaser.Scene {
             resultColor = '#e74c3c';
         }
 
-        const overlay = this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(200);
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(200);
 
         const result = this.add.text(width / 2, height / 2 - 30, resultText, {
             fontSize: '30px',
