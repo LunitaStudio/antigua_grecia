@@ -44,6 +44,18 @@ class BootScene extends Phaser.Scene {
         // Cargar emotes
         this.load.image('exclamation', 'assets/ui/emotes/exclamation.png');
 
+        // Assets de prueba para combate (fondo + pseudo-animaciones)
+        this.load.image('combat_art_base', 'assets_prueba/combate_base.png');
+        this.load.image('combat_art_rebatir', 'assets_prueba/buen_argumento.png');
+        this.load.image('combat_art_throw', 'assets_prueba/arroja_anfora.png');
+        this.load.image('combat_art_throw_alt', 'assets_prueba/arroja.png');
+        this.load.image('combat_art_ko', 'assets_prueba/socrates_ko.png');
+        this.load.image('combat_art_defeat', 'assets_prueba/derrota.png');
+
+        // Assets de prueba para portada
+        this.load.image('cover_art', 'assets_prueba/portada.png');
+        this.load.image('cover_art_sky', 'assets_prueba/portada_cielo.png');
+
         if (DEBUG_MODE.logStates) {
             console.log('BootScene: Cargando assets reales');
         }

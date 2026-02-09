@@ -30,6 +30,8 @@ class CombatScene extends Phaser.Scene {
             barWidth: 260,
             menuStartY: 458
         };
+        this.combatArtResetTimer = null;
+        this.combatArtDefaultKey = 'combat_art_base';
 
         this.createBackground();
         this.createTopCards();
@@ -48,6 +50,7 @@ class CombatScene extends Phaser.Scene {
         const { width, height, colors } = this.ui;
 
         this.add.rectangle(width / 2, height / 2, width, height, colors.bg, 0.98).setDepth(0);
+        this.createCombatArtLayer();
         this.add.rectangle(width / 2, 40, width - 28, 56, colors.panel, 0.95)
             .setStrokeStyle(2, colors.border)
             .setDepth(10);
@@ -57,6 +60,48 @@ class CombatScene extends Phaser.Scene {
             color: '#f4d03f',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(20);
+    }
+
+    createCombatArtLayer() {
+        const { width, height } = this.ui;
+
+        this.combatArtImage = this.add.image(width / 2, height / 2, this.combatArtDefaultKey).setDepth(2);
+        this.fitCombatArtToScreen(this.combatArtDefaultKey);
+
+        // Oscurecer apenas para mantener legibles barras, log y menu.
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.18).setDepth(3);
+    }
+
+    fitCombatArtToScreen(textureKey) {
+        const source = this.textures.get(textureKey).getSourceImage();
+        if (!source) return;
+
+        const scale = Math.max(this.ui.width / source.width, this.ui.height / source.height);
+        this.combatArtImage.setScale(scale);
+    }
+
+    setCombatArt(textureKey, holdMs = 900) {
+        if (!this.textures.exists(textureKey)) return;
+
+        if (this.combatArtResetTimer) {
+            this.combatArtResetTimer.remove();
+            this.combatArtResetTimer = null;
+        }
+
+        this.combatArtImage.setTexture(textureKey);
+        this.fitCombatArtToScreen(textureKey);
+
+        if (textureKey !== this.combatArtDefaultKey && holdMs > 0) {
+            this.combatArtResetTimer = this.time.delayedCall(holdMs, () => {
+                this.resetCombatArt();
+            });
+        }
+    }
+
+    resetCombatArt() {
+        this.combatArtImage.setTexture(this.combatArtDefaultKey);
+        this.fitCombatArtToScreen(this.combatArtDefaultKey);
+        this.combatArtResetTimer = null;
     }
 
     createTopCards() {
@@ -332,12 +377,31 @@ class CombatScene extends Phaser.Scene {
         this.handlePlayerAction(selected.option);
     }
 
-    playPlayerActionCue(action) {
+    playPlayerActionCue(action, result) {
         // Hook para futuro: pseudo-animaciones por accion.
+        if (action === 'amphora') {
+            this.setCombatArt('combat_art_throw', 1100);
+            return;
+        }
+
+        if (action === 'rebatir' && result.success) {
+            this.setCombatArt('combat_art_rebatir', 950);
+            return;
+        }
+
+        if (action === 'divagar' && result.success) {
+            this.setCombatArt('combat_art_rebatir', 800);
+            return;
+        }
+
+        if (action === 'flee') {
+            this.setCombatArt('combat_art_throw_alt', 800);
+        }
     }
 
     playSocratesActionCue() {
         // Hook para futuro: pseudo-animaciones de ataque de Socrates.
+        this.setCombatArt('combat_art_throw_alt', 850);
     }
 
     showCombatFeedback(message, color) {
@@ -379,7 +443,7 @@ class CombatScene extends Phaser.Scene {
         }
 
         this.combatSystem.combatLog.push(result.message);
-        this.playPlayerActionCue(option.action);
+        this.playPlayerActionCue(option.action, result);
 
         const feedbackColor = result.outcome === 'victory'
             ? 0x27ae60
@@ -435,7 +499,7 @@ class CombatScene extends Phaser.Scene {
 
         const intensityPercent = Phaser.Math.Clamp(state.socrates.intensity / state.socrates.maxIntensity, 0, 1);
         this.intensityBar.width = this.ui.barWidth * intensityPercent;
-        this.intensityText.setText(`${Math.max(0, state.socrates.intensity)}/${state.socrates.maxIntensity}`);
+        this.intensityText.setText(`Intensidad: ${Math.max(0, state.socrates.intensity)}/${state.socrates.maxIntensity}`);
 
         if (intensityPercent > 0.5) {
             this.intensityBar.setFillStyle(0xe74c3c);
@@ -447,7 +511,7 @@ class CombatScene extends Phaser.Scene {
 
         const patiencePercent = Phaser.Math.Clamp(state.player.patience / state.player.maxPatience, 0, 1);
         this.patienceBar.width = this.ui.barWidth * patiencePercent;
-        this.patienceText.setText(`${Math.max(0, state.player.patience)}/${state.player.maxPatience}`);
+        this.patienceText.setText(`Paciencia: ${Math.max(0, state.player.patience)}/${state.player.maxPatience}`);
 
         if (patiencePercent > 0.6) {
             this.patienceBar.setFillStyle(0x27ae60);
@@ -497,12 +561,15 @@ class CombatScene extends Phaser.Scene {
         if (outcome === 'victory') {
             resultText = 'VICTORIA\n\nSocrates se retira a reflexionar...';
             resultColor = '#27ae60';
+            this.setCombatArt('combat_art_ko', 0);
         } else if (outcome === 'fled') {
             resultText = 'ESCAPASTE\n\nSocrates se queda filosofando solo.';
             resultColor = '#f39c12';
+            this.setCombatArt(this.combatArtDefaultKey, 0);
         } else {
             resultText = 'DERROTA\n\nPerdiste toda tu paciencia...';
             resultColor = '#e74c3c';
+            this.setCombatArt('combat_art_defeat', 0);
         }
 
         this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.72).setDepth(200);
