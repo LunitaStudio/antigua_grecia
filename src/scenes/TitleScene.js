@@ -97,41 +97,35 @@ class TitleScene extends Phaser.Scene {
         );
         subtitle.setOrigin(0.5);
 
-        // === DESCRIPCIÓN ===
-        const description = this.add.text(
-            width / 2,
-            230,
-            'Sos Chremes, vendedor de ánforas.\nTu problema: Sócrates.',
-            {
-                fontSize: '26px',
-                color: '#ffffff',
-                align: 'center',
-                lineSpacing: 10,
-                stroke: '#1a1a1a',
-                strokeThickness: 5,
-                shadow: {
-                    offsetX: 2,
-                    offsetY: 2,
-                    color: '#000000',
-                    blur: 6,
-                    fill: true
-                }
-            }
-        );
-        description.setOrigin(0.5);
+        // === OBLEA VERTICAL (fondo para texto) ===
+        const ovalWidth = 280;
+        const ovalHeight = 180;
+        const ovalY = 260;
 
-        // === INSTRUCCIONES ===
-        const instructions = this.add.text(
+        const textBackgroundOval = this.add.rectangle(
             width / 2,
-            330,
-            'Movete con ← ↑ ↓ → o WASD\nComprá, vendé, esquivá y argumentá.',
+            ovalY,
+            ovalWidth,
+            ovalHeight,
+            0x000000,
+            0.35
+        );
+        textBackgroundOval.setDepth(19);
+        textBackgroundOval.setAlpha(0);
+
+        // === TEXTO ÚNICO (descripción + instrucciones juntas) ===
+        const gameText = this.add.text(
+            width / 2,
+            ovalY,
+            'Sos Chremes, vendedor de ánforas.\nTu problema: Sócrates.\n\nMovete con ← ↑ ↓ → o WASD\nComprá, vendé, esquivá y argumentá.',
             {
-                fontSize: '22px',
-                color: '#ecf0f1',
+                fontSize: '18px',
+                color: '#f39c12',
                 align: 'center',
-                lineSpacing: 8,
+                lineSpacing: 6,
+                wordWrap: { width: 260 },
                 stroke: '#1a1a1a',
-                strokeThickness: 4,
+                strokeThickness: 3,
                 shadow: {
                     offsetX: 2,
                     offsetY: 2,
@@ -141,10 +135,10 @@ class TitleScene extends Phaser.Scene {
                 }
             }
         );
-        instructions.setOrigin(0.5);
+        gameText.setOrigin(0.5);
 
         // Agregar textos al contenedor
-        textContainer.add([title, subtitle, description, instructions]);
+        textContainer.add([title, subtitle, gameText]);
 
         // === BOTÓN START ===
         const startButtonY = height - 80;
@@ -202,7 +196,7 @@ class TitleScene extends Phaser.Scene {
 
         // Fade-in de todo el contenido
         this.tweens.add({
-            targets: [textContainer, buttonBg, buttonText],
+            targets: [textBackgroundOval, textContainer, buttonBg, buttonText],
             alpha: 1,
             duration: 1000,
             ease: 'Power2'
