@@ -51,12 +51,12 @@ class CombatScene extends Phaser.Scene {
 
         this.add.rectangle(width / 2, height / 2, width, height, colors.bg, 0.98).setDepth(0);
         this.createCombatArtLayer();
-        this.add.rectangle(width / 2, 40, width - 28, 56, colors.panel, 0.95)
+        this.add.rectangle(width / 2, 40, width - 28, 50, colors.panel, 0.80)
             .setStrokeStyle(2, colors.border)
             .setDepth(10);
 
-        this.add.text(width / 2, 40, 'COMBATE FILOSOFICO', {
-            fontSize: '30px',
+        this.add.text(width / 2, 40, '⚔️ COMBATE FILOSÓFICO ⚔️', {
+            fontSize: '26px',
             color: '#f4d03f',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(20);
@@ -68,8 +68,8 @@ class CombatScene extends Phaser.Scene {
         this.combatArtImage = this.add.image(width / 2, height / 2, this.combatArtDefaultKey).setDepth(2);
         this.fitCombatArtToScreen(this.combatArtDefaultKey);
 
-        // Oscurecer apenas para mantener legibles barras, log y menu.
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.18).setDepth(3);
+        // Oscurecer MUY POCO para que se vea bien el arte
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.08).setDepth(3);
     }
 
     fitCombatArtToScreen(textureKey) {
@@ -111,49 +111,47 @@ class CombatScene extends Phaser.Scene {
         const leftX = width / 2 - rowWidth / 2;
 
         // ENEMIGO ARRIBA
-        const enemyRowY = 112;
-        this.add.rectangle(width / 2, enemyRowY, rowWidth, 78, colors.panel, 0.93)
+        const enemyRowY = 100;
+        this.add.rectangle(width / 2, enemyRowY, rowWidth, 56, colors.panel, 0.85)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.sprite(leftX + 36, enemyRowY - 4, 'oldman', 0).setScale(3.2).setDepth(35);
-        this.add.text(leftX + 72, enemyRowY - 20, 'SOCRATES', {
-            fontSize: '16px',
+        this.add.text(leftX + 20, enemyRowY - 16, 'SÓCRATES', {
+            fontSize: '18px',
             color: '#ffc5bf',
             fontStyle: 'bold'
         }).setDepth(35);
 
-        this.intensityBarBg = this.add.rectangle(leftX + 72, enemyRowY + 2, barWidth, 14, 0x0b1018, 1)
+        this.intensityBarBg = this.add.rectangle(leftX + 20, enemyRowY + 4, barWidth, 12, 0x0b1018, 1)
             .setOrigin(0, 0)
             .setDepth(32);
-        this.intensityBar = this.add.rectangle(leftX + 72, enemyRowY + 2, barWidth, 14, colors.enemy, 1)
+        this.intensityBar = this.add.rectangle(leftX + 20, enemyRowY + 4, barWidth, 12, colors.enemy, 1)
             .setOrigin(0, 0)
             .setDepth(33);
-        this.intensityText = this.add.text(leftX + 72 + (barWidth / 2), enemyRowY + 9, '', {
-            fontSize: '12px',
+        this.intensityText = this.add.text(leftX + 20 + (barWidth / 2), enemyRowY + 10, '', {
+            fontSize: '11px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(35);
 
         // JUGADOR ABAJO
         const playerRowY = 420;
-        this.add.rectangle(width / 2, playerRowY, rowWidth - 40, 64, colors.panel, 0.93)
+        this.add.rectangle(width / 2, playerRowY, rowWidth - 40, 54, colors.panel, 0.85)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.sprite(leftX + 48, playerRowY - 2, 'boy', 0).setScale(3).setDepth(35);
-        this.add.text(leftX + 92, playerRowY - 16, 'ALFARERO', {
-            fontSize: '16px',
+        this.add.text(leftX + 64, playerRowY - 14, 'CHREMES', {
+            fontSize: '18px',
             color: '#a9d6ff',
             fontStyle: 'bold'
         }).setDepth(35);
 
-        this.patienceBarBg = this.add.rectangle(leftX + 92, playerRowY + 2, barWidth, 14, 0x0b1018, 1)
+        this.patienceBarBg = this.add.rectangle(leftX + 64, playerRowY + 4, barWidth, 12, 0x0b1018, 1)
             .setOrigin(0, 0)
             .setDepth(32);
-        this.patienceBar = this.add.rectangle(leftX + 92, playerRowY + 2, barWidth, 14, colors.player, 1)
+        this.patienceBar = this.add.rectangle(leftX + 64, playerRowY + 4, barWidth, 12, colors.player, 1)
             .setOrigin(0, 0)
             .setDepth(33);
-        this.patienceText = this.add.text(leftX + 92 + (barWidth / 2), playerRowY + 9, '', {
-            fontSize: '12px',
+        this.patienceText = this.add.text(leftX + 64 + (barWidth / 2), playerRowY + 10, '', {
+            fontSize: '11px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(35);
@@ -162,7 +160,7 @@ class CombatScene extends Phaser.Scene {
     createLogPanel() {
         const { width, colors } = this.ui;
 
-        this.logBox = this.add.rectangle(width / 2, 292, width - 60, 188, colors.panel, 0.95)
+        this.logBox = this.add.rectangle(width / 2, 292, width - 60, 164, colors.panel, 0.85)
             .setStrokeStyle(2, colors.border)
             .setDepth(40);
 

@@ -70,7 +70,7 @@ class CombatSystem {
     init(player, question) {
         // Usa paciencia global del jugador.
         this.player = {
-            name: 'Alfarero',
+            name: 'Chremes',
             patienceRef: player,
             amphoras: player.amphoras
         };

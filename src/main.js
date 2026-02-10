@@ -1,6 +1,7 @@
 // Configurar scenes
 GameConfig.scene = [
     BootScene,
+    TitleScene,
     GameScene,
     CombatScene,
     DialogScene

@@ -72,9 +72,9 @@ class BootScene extends Phaser.Scene {
         this.createCharacterAnimations('villager');
 
         if (DEBUG_MODE.logStates) {
-            console.log('BootScene: Animaciones creadas, iniciando GameScene');
+            console.log('BootScene: Animaciones creadas, iniciando TitleScene');
         }
-        this.scene.start('GameScene');
+        this.scene.start('TitleScene');
     }
 
     createCharacterAnimations(key) {
