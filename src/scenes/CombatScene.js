@@ -51,15 +51,13 @@ class CombatScene extends Phaser.Scene {
 
         this.add.rectangle(width / 2, height / 2, width, height, colors.bg, 0.98).setDepth(0);
         this.createCombatArtLayer();
-        this.add.rectangle(width / 2, 40, width - 28, 50, colors.panel, 0.80)
-            .setStrokeStyle(2, colors.border)
-            .setDepth(10);
 
-        this.add.text(width / 2, 40, '⚔️ COMBATE FILOSÓFICO ⚔️', {
-            fontSize: '26px',
-            color: '#f4d03f',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(20);
+        // Título pequeño opcional (puede comentarse para más espacio)
+        // this.add.text(width / 2, 15, '⚔️ Combate Filosófico', {
+        //     fontSize: '16px',
+        //     color: '#f4d03f',
+        //     fontStyle: 'bold'
+        // }).setOrigin(0.5).setDepth(20);
     }
 
     createCombatArtLayer() {
@@ -68,8 +66,8 @@ class CombatScene extends Phaser.Scene {
         this.combatArtImage = this.add.image(width / 2, height / 2, this.combatArtDefaultKey).setDepth(2);
         this.fitCombatArtToScreen(this.combatArtDefaultKey);
 
-        // Oscurecer MUY POCO para que se vea bien el arte
-        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.08).setDepth(3);
+        // Oscurecer MÍNIMO para que se vea bien el arte (estilo Pokemon)
+        this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.05).setDepth(3);
     }
 
     fitCombatArtToScreen(textureKey) {
@@ -105,83 +103,111 @@ class CombatScene extends Phaser.Scene {
     }
 
     createTopCards() {
-        const { width, colors, barWidth } = this.ui;
+        const { width, height, colors } = this.ui;
 
-        const rowWidth = width - 80;
-        const leftX = width / 2 - rowWidth / 2;
+        // === SÓCRATES - ARRIBA IZQUIERDA ===
+        const enemyCardX = 20;
+        const enemyCardY = 30;
+        const enemyCardWidth = 220;
+        const enemyCardHeight = 52;
 
-        // ENEMIGO ARRIBA
-        const enemyRowY = 100;
-        this.add.rectangle(width / 2, enemyRowY, rowWidth, 56, colors.panel, 0.85)
+        this.add.rectangle(enemyCardX, enemyCardY, enemyCardWidth, enemyCardHeight, colors.panel, 0.90)
+            .setOrigin(0, 0)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.text(leftX + 20, enemyRowY - 16, 'SÓCRATES', {
-            fontSize: '18px',
+
+        this.add.text(enemyCardX + 12, enemyCardY + 8, 'SÓCRATES', {
+            fontSize: '16px',
             color: '#ffc5bf',
             fontStyle: 'bold'
         }).setDepth(35);
 
-        this.intensityBarBg = this.add.rectangle(leftX + 20, enemyRowY + 4, barWidth, 12, 0x0b1018, 1)
+        this.intensityBarBg = this.add.rectangle(enemyCardX + 12, enemyCardY + 30, 196, 10, 0x0b1018, 1)
             .setOrigin(0, 0)
             .setDepth(32);
-        this.intensityBar = this.add.rectangle(leftX + 20, enemyRowY + 4, barWidth, 12, colors.enemy, 1)
+        this.intensityBar = this.add.rectangle(enemyCardX + 12, enemyCardY + 30, 196, 10, colors.enemy, 1)
             .setOrigin(0, 0)
             .setDepth(33);
-        this.intensityText = this.add.text(leftX + 20 + (barWidth / 2), enemyRowY + 10, '', {
-            fontSize: '11px',
+        this.intensityText = this.add.text(enemyCardX + 110, enemyCardY + 35, '', {
+            fontSize: '10px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(35);
 
-        // JUGADOR ABAJO
-        const playerRowY = 420;
-        this.add.rectangle(width / 2, playerRowY, rowWidth - 40, 54, colors.panel, 0.85)
+        // === CHREMES - ABAJO DERECHA ===
+        const playerCardWidth = 240;
+        const playerCardHeight = 54;
+        const playerCardX = width - playerCardWidth - 20;
+        const playerCardY = height - 200;
+
+        this.add.rectangle(playerCardX, playerCardY, playerCardWidth, playerCardHeight, colors.panel, 0.90)
+            .setOrigin(0, 0)
             .setStrokeStyle(2, colors.border)
             .setDepth(30);
-        this.add.text(leftX + 64, playerRowY - 14, 'CHREMES', {
-            fontSize: '18px',
+
+        this.add.text(playerCardX + 12, playerCardY + 8, 'CHREMES', {
+            fontSize: '16px',
             color: '#a9d6ff',
             fontStyle: 'bold'
         }).setDepth(35);
 
-        this.patienceBarBg = this.add.rectangle(leftX + 64, playerRowY + 4, barWidth, 12, 0x0b1018, 1)
+        this.patienceBarBg = this.add.rectangle(playerCardX + 12, playerCardY + 32, 216, 10, 0x0b1018, 1)
             .setOrigin(0, 0)
             .setDepth(32);
-        this.patienceBar = this.add.rectangle(leftX + 64, playerRowY + 4, barWidth, 12, colors.player, 1)
+        this.patienceBar = this.add.rectangle(playerCardX + 12, playerCardY + 32, 216, 10, colors.player, 1)
             .setOrigin(0, 0)
             .setDepth(33);
-        this.patienceText = this.add.text(leftX + 64 + (barWidth / 2), playerRowY + 10, '', {
-            fontSize: '11px',
+        this.patienceText = this.add.text(playerCardX + 120, playerCardY + 37, '', {
+            fontSize: '10px',
             color: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(35);
     }
 
     createLogPanel() {
-        const { width, colors } = this.ui;
+        const { width, height, colors } = this.ui;
 
-        this.logBox = this.add.rectangle(width / 2, 292, width - 60, 164, colors.panel, 0.85)
-            .setStrokeStyle(2, colors.border)
+        // === PANEL INFERIOR ESTILO POKEMON ===
+        const panelHeight = 140;
+        const panelY = height - panelHeight;
+
+        // Fondo del panel completo
+        this.logBox = this.add.rectangle(0, panelY, width, panelHeight, colors.panel, 0.92)
+            .setOrigin(0, 0)
+            .setStrokeStyle(3, colors.border, 1)
             .setDepth(40);
 
-        this.turnIndicator = this.add.text(width / 2, 176, '', {
-            fontSize: '15px',
+        // === LADO IZQUIERDO: Texto/Pregunta ===
+        const textBoxWidth = width * 0.52;
+        const textBoxX = 16;
+        const textBoxY = panelY + 12;
+
+        // Caja de texto
+        this.add.rectangle(textBoxX, textBoxY, textBoxWidth, panelHeight - 24, 0x1a2332, 0.6)
+            .setOrigin(0, 0)
+            .setStrokeStyle(2, colors.border)
+            .setDepth(41);
+
+        // Indicador de turno pequeño
+        this.turnIndicator = this.add.text(textBoxX + 12, textBoxY + 8, '', {
+            fontSize: '12px',
             color: '#f39c12',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(45);
+        }).setDepth(45);
 
-        this.add.text(44, 208, 'LOG DE COMBATE', {
-            fontSize: '13px',
-            color: '#d6e4f0',
-            fontStyle: 'bold'
-        }).setDepth(41);
-
-        this.combatLogText = this.add.text(44, 230, '', {
-            fontSize: '13px',
+        // Texto de la pregunta/log
+        this.combatLogText = this.add.text(textBoxX + 12, textBoxY + 28, '', {
+            fontSize: '14px',
             color: '#ffffff',
-            lineSpacing: 2,
-            wordWrap: { width: width - 92 }
-        }).setDepth(41);
+            lineSpacing: 4,
+            wordWrap: { width: textBoxWidth - 24 }
+        }).setDepth(45);
+
+        // Guardar coordenadas para el menú (lado derecho)
+        this.menuAreaX = textBoxX + textBoxWidth + 12;
+        this.menuAreaY = panelY + 12;
+        this.menuAreaWidth = width - this.menuAreaX - 16;
+        this.menuAreaHeight = panelHeight - 24;
     }
 
     setupKeyboardInput() {
@@ -237,60 +263,72 @@ class CombatScene extends Phaser.Scene {
     }
 
     createVerticalMenu() {
-        const { width, colors } = this.ui;
+        const { colors } = this.ui;
         const state = this.combatSystem.getState();
         const allOptions = this.buildActions(state);
 
-        const menuX = 60;
-        const menuY = this.ui.menuStartY;
-        const menuWidth = width - 120;
-        const optionHeight = 28;
-        const optionSpacing = 4;
-        const menuHeight = (optionHeight + optionSpacing) * allOptions.length + 14;
+        // Usar el área del menú en el lado derecho del panel inferior
+        const menuX = this.menuAreaX;
+        const menuY = this.menuAreaY;
+        const menuWidth = this.menuAreaWidth;
+        const optionHeight = 26;
+        const optionSpacing = 3;
 
+        // Fondo del menú
         this.menuBox = this.add.rectangle(
-            width / 2,
-            menuY + menuHeight / 2,
+            menuX,
+            menuY,
             menuWidth,
-            menuHeight,
-            colors.panel,
-            0.96
-        ).setDepth(50);
+            this.menuAreaHeight,
+            0x1a2332,
+            0.6
+        ).setOrigin(0, 0).setDepth(50);
         this.menuBox.setStrokeStyle(2, colors.border);
 
+        // Selector
         this.menuSelector = this.add.rectangle(
-            width / 2,
-            menuY + 7 + optionHeight / 2,
-            menuWidth - 10,
+            menuX + 6,
+            menuY + 6,
+            menuWidth - 12,
             optionHeight,
             colors.accent,
-            0.32
-        ).setDepth(55);
+            0.35
+        ).setOrigin(0, 0).setDepth(55);
         this.menuSelector.setStrokeStyle(2, colors.accent);
 
         this.menuOptions = [];
 
         allOptions.forEach((option, index) => {
-            const y = menuY + 7 + (index * (optionHeight + optionSpacing)) + optionHeight / 2;
+            const optY = menuY + 6 + (index * (optionHeight + optionSpacing));
 
-            const numberText = this.add.text(menuX + 16, y, `${index + 1}.`, {
-                fontSize: '13px',
+            // Número
+            const numberText = this.add.text(menuX + 12, optY + optionHeight / 2, `${index + 1}.`, {
+                fontSize: '12px',
                 color: '#95a5a6',
                 fontStyle: 'bold'
             }).setOrigin(0, 0.5).setDepth(60);
 
-            const qualityIndicator = this.add.rectangle(menuX + 46, y, 10, 10, option.color).setDepth(60);
+            // Indicador de color
+            const qualityIndicator = this.add.rectangle(
+                menuX + 32,
+                optY + optionHeight / 2,
+                8,
+                8,
+                option.color
+            ).setDepth(60);
 
-            const optionText = this.add.text(menuX + 62, y, option.text, {
+            // Texto de la opción
+            const optionText = this.add.text(menuX + 46, optY + optionHeight / 2, option.text, {
                 fontSize: '12px',
                 color: '#ecf0f1',
-                wordWrap: { width: menuWidth - 170 }
+                wordWrap: { width: menuWidth - 56 }
             }).setOrigin(0, 0.5).setDepth(60);
 
+            // Área interactiva
             const hitArea = this.add.rectangle(
-                width / 2,
-                y,
-                menuWidth - 10,
+                menuX + menuWidth / 2,
+                optY + optionHeight / 2,
+                menuWidth - 12,
                 optionHeight,
                 0xffffff,
                 0
@@ -315,7 +353,7 @@ class CombatScene extends Phaser.Scene {
                 qualityIndicator,
                 optionText,
                 hitArea,
-                y
+                y: optY
             });
         });
 
@@ -341,7 +379,9 @@ class CombatScene extends Phaser.Scene {
 
     updateSelector() {
         if (this.menuOptions[this.selectedIndex]) {
-            this.menuSelector.y = this.menuOptions[this.selectedIndex].y;
+            const optionHeight = 26;
+            const optionSpacing = 3;
+            this.menuSelector.y = this.menuAreaY + 6 + (this.selectedIndex * (optionHeight + optionSpacing));
         }
     }
 
@@ -495,9 +535,10 @@ class CombatScene extends Phaser.Scene {
     updateUI() {
         const state = this.combatSystem.getState();
 
+        // Actualizar barra de Sócrates (196px de ancho máximo)
         const intensityPercent = Phaser.Math.Clamp(state.socrates.intensity / state.socrates.maxIntensity, 0, 1);
-        this.intensityBar.width = this.ui.barWidth * intensityPercent;
-        this.intensityText.setText(`Intensidad: ${Math.max(0, state.socrates.intensity)}/${state.socrates.maxIntensity}`);
+        this.intensityBar.width = 196 * intensityPercent;
+        this.intensityText.setText(`${Math.max(0, state.socrates.intensity)}/${state.socrates.maxIntensity}`);
 
         if (intensityPercent > 0.5) {
             this.intensityBar.setFillStyle(0xe74c3c);
@@ -507,9 +548,10 @@ class CombatScene extends Phaser.Scene {
             this.intensityBar.setFillStyle(0x95a5a6);
         }
 
+        // Actualizar barra de Chremes (216px de ancho máximo)
         const patiencePercent = Phaser.Math.Clamp(state.player.patience / state.player.maxPatience, 0, 1);
-        this.patienceBar.width = this.ui.barWidth * patiencePercent;
-        this.patienceText.setText(`Paciencia: ${Math.max(0, state.player.patience)}/${state.player.maxPatience}`);
+        this.patienceBar.width = 216 * patiencePercent;
+        this.patienceText.setText(`${Math.max(0, state.player.patience)}/${state.player.maxPatience}`);
 
         if (patiencePercent > 0.6) {
             this.patienceBar.setFillStyle(0x27ae60);
@@ -519,16 +561,18 @@ class CombatScene extends Phaser.Scene {
             this.patienceBar.setFillStyle(0xe74c3c);
         }
 
+        // Indicador de turno
         if (state.isPlayerTurn) {
-            this.turnIndicator.setText('Tu turno');
+            this.turnIndicator.setText('▶ Tu turno');
             this.turnIndicator.setColor('#3498db');
         } else {
-            this.turnIndicator.setText('Turno de Socrates...');
+            this.turnIndicator.setText('Turno de Sócrates...');
             this.turnIndicator.setColor('#e74c3c');
         }
 
+        // Log de combate (últimas 3 líneas, más compacto)
         const recentLog = state.combatLog
-            .slice(-4)
+            .slice(-3)
             .map(line => line.replace(/\n+/g, ' ').trim())
             .join('\n');
         this.combatLogText.setText(recentLog);
