@@ -48,6 +48,14 @@ class GameScene extends Phaser.Scene {
             CLIENT_SPAWN_Y * TILE_SIZE + TILE_SIZE / 2
         );
 
+        // Crear soldado corrupto (empieza inactivo, se activa tras primer viaje)
+        const { SOLDIER_SPAWN_X, SOLDIER_SPAWN_Y } = GAME_CONSTANTS;
+        this.soldier = new SoldierNPC(
+            this,
+            SOLDIER_SPAWN_X * TILE_SIZE + TILE_SIZE / 2,
+            SOLDIER_SPAWN_Y * TILE_SIZE + TILE_SIZE / 2
+        );
+
         // Configurar cámara para seguir al jugador
         this.cameras.main.startFollow(this.player.sprite, true, 0.1, 0.1);
         this.cameras.main.setBounds(0, 0, worldWidth, worldHeight);
@@ -75,6 +83,9 @@ class GameScene extends Phaser.Scene {
             this
         );
 
+        // Colisión con soldado (solo overlap, no bloquea)
+        this.physics.add.collider(this.soldier.sprite, this.obstacles);
+
         // Sistema de diálogo
         this.dialogSystem = new DialogSystem(this);
         this.dialogSystem.create();
@@ -82,6 +93,11 @@ class GameScene extends Phaser.Scene {
         // Event listeners
         this.events.on('socrates-engaged', (player) => {
             this.handleSocratesEngagement();
+        });
+
+        // Evento del soldado cobrando coima
+        this.events.on('soldier-collect', (player) => {
+            this.handleSoldierInteraction();
         });
 
         this.isInteracting = false;
@@ -376,6 +392,7 @@ class GameScene extends Phaser.Scene {
         // Actualizar entidades
         this.player.update();
         this.socrates.update(this.player);
+        this.soldier.update(this.player);
 
         // Actualizar UI
         const { WIN_MONEY_GOAL } = GAME_CONSTANTS;
@@ -399,7 +416,7 @@ class GameScene extends Phaser.Scene {
 
         // Debug info
         if (DEBUG_MODE.logStates && this.debugText) {
-            this.debugText.setText(`Sócrates: ${this.socrates.state}`);
+            this.debugText.setText(`Sócrates: ${this.socrates.state} | Soldado: ${this.soldier.state}`);
         }
 
         // Actualizar FPS (solo en debug)
@@ -556,6 +573,14 @@ class GameScene extends Phaser.Scene {
             this.stats.tripsCompleted++;
             this.showFeedback(result.message, 0x27ae60);
 
+            // Activar soldado después del primer viaje completado
+            if (this.stats.tripsCompleted === 1) {
+                this.time.delayedCall(2000, () => {
+                    this.soldier.activate();
+                    this.showFeedback('⚔️ Un soldado apareció en la calle derecha...\n¡Cuidado con la coima!', 0xe74c3c);
+                });
+            }
+
             // Verificar win condition
             if (this.player.money >= GAME_CONSTANTS.WIN_MONEY_GOAL) {
                 this.time.delayedCall(2500, () => this.handleVictory());
@@ -567,6 +592,31 @@ class GameScene extends Phaser.Scene {
         this.time.delayedCall(2500, () => {
             this.isInteracting = false;
         });
+    }
+
+    handleSoldierInteraction() {
+        const { SOLDIER_BRIBE } = GAME_CONSTANTS;
+        const money = this.player.money;
+
+        if (money === 0) {
+            // Sin plata → te deja pasar
+            this.showFeedback('"No valés ni mi tiempo.\n¡Fuera de acá!"', 0x95a5a6);
+        } else if (money >= SOLDIER_BRIBE) {
+            // Tiene suficiente → cobra la coima completa
+            this.player.money -= SOLDIER_BRIBE;
+            this.showFeedback(`⚔️ "Peaje de seguridad: ${SOLDIER_BRIBE} dracmas."\n-${SOLDIER_BRIBE} 💰`, 0xe74c3c);
+        } else {
+            // Tiene algo pero menos de 15 → le saca todo
+            this.player.money = 0;
+            this.showFeedback(`⚔️ "No te alcanza... me quedo con tus ${money} dracmas."`, 0xe74c3c);
+        }
+
+        // Poner al soldado en cooldown para que no cobre doble
+        this.soldier.startCooldown();
+
+        if (DEBUG_MODE.logStates) {
+            console.log(`Soldado cobró. Dinero: ${money} → ${this.player.money}`);
+        }
     }
 
     showFeedback(message, color) {

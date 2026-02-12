@@ -81,5 +81,23 @@ const GAME_CONSTANTS = {
         PURSUE: 'PURSUE',
         ENGAGE: 'ENGAGE',
         STUNNED: 'STUNNED'  // Nuevo: KO por ánfora
+    },
+
+    // Soldado corrupto
+    SOLDIER_SPEED: 80,
+    SOLDIER_DETECT_RADIUS: 250,
+    SOLDIER_ENGAGE_RADIUS: 40,
+    SOLDIER_BRIBE: 15,               // Coima fija en dracmas
+    SOLDIER_COOLDOWN: 5000,           // 5 seg de cooldown después de cobrar
+    SOLDIER_SPAWN_X: 32,             // tile x en RIGHT_STREET
+    SOLDIER_SPAWN_Y: 9,
+    SOLDIER_PATROL_ZONE: { start: 29, end: 35 }, // Tiles de patrulla
+    SOLDIER_STATES: {
+        INACTIVE: 'INACTIVE',        // No aparece hasta tripsCompleted >= 1
+        IDLE: 'IDLE',                // Patrullando
+        DETECT: 'DETECT',            // Vio al jugador
+        PURSUE: 'PURSUE',            // Persiguiendo
+        COLLECT: 'COLLECT',          // Cobrando coima
+        COOLDOWN_IDLE: 'COOLDOWN_IDLE' // Post-cobro, deja pasar
     }
 };

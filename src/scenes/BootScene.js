@@ -30,6 +30,11 @@ class BootScene extends Phaser.Scene {
             frameHeight: 16
         });
 
+        this.load.spritesheet('soldier', 'assets/sprites/soldier.png', {
+            frameWidth: 16,
+            frameHeight: 16
+        });
+
         // Cargar tilesets
         this.load.image('tileset_floor', 'assets/tilesets/floor.png');
         this.load.image('tileset_house', 'assets/tilesets/house.png');
@@ -70,6 +75,9 @@ class BootScene extends Phaser.Scene {
 
         // Crear animaciones para el cliente (villager)
         this.createCharacterAnimations('villager');
+
+        // Crear animaciones para el soldado
+        this.createCharacterAnimations('soldier');
 
         if (DEBUG_MODE.logStates) {
             console.log('BootScene: Animaciones creadas, iniciando TitleScene');

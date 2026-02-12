@@ -42,7 +42,7 @@ class ProviderNPC {
     interact(player) {
         const { MAX_AMPHORAS, AMPHORA_BUY_PRICE } = GAME_CONSTANTS;
 
-        // Calcular cuántas ánforas puede comprar
+        // Calcular cuántas ánforas necesita
         const neededAmphoras = MAX_AMPHORAS - player.amphoras;
 
         if (neededAmphoras === 0) {
@@ -52,25 +52,36 @@ class ProviderNPC {
             };
         }
 
-        const totalCost = neededAmphoras * AMPHORA_BUY_PRICE;
+        // Calcular cuántas puede PAGAR (no exigir llenar todo el inventario)
+        const affordableAmphoras = Math.min(neededAmphoras, Math.floor(player.money / AMPHORA_BUY_PRICE));
 
-        if (player.money < totalCost) {
+        if (affordableAmphoras === 0) {
             return {
                 success: false,
-                message: `"Necesitás ${totalCost} dracmas para llenar tu inventario.\nSolo tenés ${player.money} dracmas."`
+                message: `"No te alcanza ni para una ánfora.\nNecesitás al menos ${AMPHORA_BUY_PRICE} dracmas."`
             };
         }
 
-        // Comprar ánforas (auto-llenar)
-        player.buyAmphoras(neededAmphoras, AMPHORA_BUY_PRICE);
+        const totalCost = affordableAmphoras * AMPHORA_BUY_PRICE;
+
+        // Comprar las que pueda pagar
+        player.buyAmphoras(affordableAmphoras, AMPHORA_BUY_PRICE);
 
         // Regenerar paciencia
         player.restorePatience(GAME_CONSTANTS.PATIENCE_REGEN_ON_BUY);
 
+        // Mensaje adaptado: si compró menos de las que necesitaba, avisar
+        let message;
+        if (affordableAmphoras < neededAmphoras) {
+            message = `"Solo te alcanza para ${affordableAmphoras} ánfora${affordableAmphoras > 1 ? 's' : ''}.\nSon ${totalCost} dracmas.\nVolvé con más plata para llenar el inventario."`;
+        } else {
+            message = `"Acá tenés ${affordableAmphoras} ánfora${affordableAmphoras > 1 ? 's' : ''}.\nSon ${totalCost} dracmas.\n¡Buena suerte con Sócrates!"`;
+        }
+
         return {
             success: true,
-            message: `"Acá tenés ${neededAmphoras} ánfora${neededAmphoras > 1 ? 's' : ''}.\nSon ${totalCost} dracmas.\n¡Buena suerte con Sócrates!"`,
-            amphoras: neededAmphoras,
+            message: message,
+            amphoras: affordableAmphoras,
             cost: totalCost
         };
     }
